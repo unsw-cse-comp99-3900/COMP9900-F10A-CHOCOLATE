@@ -4,14 +4,34 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from './ui/button';
-import { ShoppingCart, Search, Menu, X } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu"
+import { cn } from "@/lib/utils";
 
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileShopOpen, setMobileShopOpen] = useState(false);
+  const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const toggleMobileShop = () => {
+    setMobileShopOpen(!mobileShopOpen);
+  };
+
+  const toggleMobileAbout = () => {
+    setMobileAboutOpen(!mobileAboutOpen);
   };
 
   return (
@@ -81,16 +101,48 @@ const Header = () => {
                 HOME
               </Link>
             </li>
-            <li className="py-2 px-4 border-b border-gray-700">
-              <Link href="/shop" className="font-semibold hover:text-gray-300 transition-colors block">
-                SHOP
-              </Link>
+            
+            <li className="border-b border-gray-700">
+              <div className="py-2 px-4">
+                <button 
+                  onClick={toggleMobileShop}
+                  className="font-semibold hover:text-gray-300 transition-colors flex items-center w-full justify-between"
+                >
+                  <span>SHOP</span>
+                  {mobileShopOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+                </button>
+              </div>
+              {mobileShopOpen && (
+                <div className="bg-gray-800 py-1">
+                  <Link href="/shop/categories" className="block py-2 px-8 hover:bg-gray-700">
+                    Categories
+                  </Link>
+                </div>
+              )}
             </li>
-            <li className="py-2 px-4 border-b border-gray-700">
-              <Link href="/about" className="font-semibold hover:text-gray-300 transition-colors block">
-                ABOUT US
-              </Link>
+            
+            <li className="border-b border-gray-700">
+              <div className="py-2 px-4">
+                <button 
+                  onClick={toggleMobileAbout}
+                  className="font-semibold hover:text-gray-300 transition-colors flex items-center w-full justify-between"
+                >
+                  <span>ABOUT US</span>
+                  {mobileAboutOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+                </button>
+              </div>
+              {mobileAboutOpen && (
+                <div className="bg-gray-800 py-1">
+                  <Link href="/about" className="block py-2 px-8 hover:bg-gray-700">
+                    About Us
+                  </Link>
+                  <Link href="/faq" className="block py-2 px-8 hover:bg-gray-700">
+                    FAQs
+                  </Link>
+                </div>
+              )}
             </li>
+            
             <li className="py-2 px-4">
               <Link href="/contact" className="font-semibold hover:text-gray-300 transition-colors block">
                 CONTACT US
@@ -100,31 +152,52 @@ const Header = () => {
         </div>
 
         {/* Desktop menu */}
-        <ul className="hidden md:flex justify-center space-x-24 py-3">
-          <li>
-            <Link href="/" className="font-semibold hover:text-gray-300 transition-colors">
+        <div className="hidden md:flex justify-center py-3 bg-black">
+          <div className="flex space-x-16">
+            <Link href="/" className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2">
               HOME
             </Link>
-          </li>
-          <li>
-            <Link href="/shop" className="font-semibold hover:text-gray-300 transition-colors">
-              SHOP
-            </Link>
-          </li>
-          <li>
-            <Link href="/about" className="font-semibold hover:text-gray-300 transition-colors">
-              ABOUT US
-            </Link>
-          </li>
-          <li>
-            <Link href="/contact" className="font-semibold hover:text-gray-300 transition-colors">
+            
+            <div className="relative group">
+              <button className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2 flex items-center">
+                SHOP
+                <ChevronDown className="ml-1 h-4 w-4" />
+              </button>
+              <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-[200px] z-50">
+                <div className="py-2">
+                  <Link href="/shop/categories" className="block px-4 py-2 hover:bg-gray-100">
+                    Categories
+                  </Link>
+                </div>
+              </div>
+            </div>
+            
+            <div className="relative group">
+              <button className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2 flex items-center">
+                ABOUT US
+                <ChevronDown className="ml-1 h-4 w-4" />
+              </button>
+              <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-[200px] z-50">
+                <div className="py-2">
+                  <Link href="/about" className="block px-4 py-2 hover:bg-gray-100">
+                    About Us
+                  </Link>
+                  <Link href="/faq" className="block px-4 py-2 hover:bg-gray-100">
+                    FAQs
+                  </Link>
+                </div>
+              </div>
+            </div>
+            
+            <Link href="/contact" className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2">
               CONTACT US
             </Link>
-          </li>
-        </ul>
+          </div>
+        </div>
       </nav>
     </header>
   );
 };
 
 export default Header;
+
