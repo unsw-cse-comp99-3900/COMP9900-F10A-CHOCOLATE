@@ -1,11 +1,33 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Facebook, Instagram, Twitter } from 'lucide-react';
+import { Button } from './ui/button';
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-100 pt-12 pb-8">
-      <div className="container mx-auto px-4">
+    <footer className="bg-gray-100  pb-8">
+      {/* Newsletter Subscription */}
+      <div className="bg-black py-4 mb-4">
+        <div className="container mx-auto px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="text-white text-xl md:text-2xl font-medium mb-4 md:mb-0 md:ml-8">
+              Don't miss our newsletter!
+            </div>
+            <div className="flex w-full md:w-auto md:mr-8">
+              <input
+                type="email"
+                placeholder="Email address"
+                className="px-16 py-3 rounded-full w-full md:w-80 focus:outline-none bg-white border border-gray-300"
+              />
+              <Button className="bg-white text-black hover:bg-gray-200 rounded-full px-8 py-3 font-medium border border-l-0 border-gray-300">
+                Subscribe
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Logo and Social Media */}
           <div className="col-span-1 flex flex-col items-center md:items-center md:-mt-6">
