@@ -38,13 +38,16 @@ const Header = () => {
     <header className="w-full">
       {/* Top header section */}
       <div className="w-full bg-gray-100 py-4 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between">
-        {/* Logo placeholder */}
-        <div className="w-48 h-16 bg-gray-300 flex items-center justify-center border border-gray-400">
-          <div className="w-full h-full relative flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center justify-center">
-            </div>
-          </div>
-        </div>
+        {/* Logo */}
+        <Link href="/" className="w-48 h-16 relative">
+          <Image 
+            src="/farmerplace-logo.png" 
+            alt="Fresh Harvest Logo" 
+            fill
+            className="object-contain"
+            priority
+          />
+        </Link>
 
         {/* Search bar */}
         <div className="relative w-full md:w-auto md:flex-1 mx-4 my-4 md:my-0">
