@@ -40,14 +40,14 @@ const Footer = () => {
               />
             </div>
             <div className="flex justify-center space-x-4 mt-2">
-              <Link href="#" className="text-gray-600 hover:text-blue-500 transition-colors">
-                <Facebook size={20} />
+              <Link href="#" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
+                <Facebook size={30} />
               </Link>
-              <Link href="#" className="text-gray-600 hover:text-blue-500 transition-colors">
-                <Instagram size={20} />
+              <Link href="#" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
+                <Instagram size={30} />
               </Link>
-              <Link href="#" className="text-gray-600 hover:text-blue-500 transition-colors">
-                <Twitter size={20} />
+              <Link href="#" className="text-gray-600 hover:text-green-600 font-semibold  transition-colors">
+                <Twitter size={30} />
               </Link>
             </div>
           </div>
@@ -57,22 +57,22 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Customer Service</h3>
             <ul className="space-y-2 text-center">
               <li>
-                <Link href="/faq" className="text-gray-600 hover:text-blue-500 transition-colors">
+                <Link href="/faq" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
                   FAQs
                 </Link>
               </li>
               <li>
-                <Link href="/shpping" className="text-gray-600 hover:text-blue-500 transition-colors">
+                <Link href="/shpping" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/returns" className="text-gray-600 hover:text-blue-500 transition-colors">
+                <Link href="/returns" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
                   Returns & Refunds
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="text-gray-600 hover:text-blue-500 transition-colors">
+                <Link href="/privacy" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
                   Privacy Policy
                 </Link>
               </li>
