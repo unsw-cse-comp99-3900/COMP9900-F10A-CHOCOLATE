@@ -86,7 +86,10 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
             <ul className="space-y-2 text-center">
               <li className="text-gray-600">
-                <span className="font-medium">Email:</span> info@freshharvest.com
+                <span className="font-medium">Email:</span>{" "}
+                <a href="mailto:info@freshharvest.com" className="hover:text-green-600 transition-colors">
+                  info@freshharvest.com
+                </a>
               </li>
               <li className="text-gray-600">
                 <span className="font-medium">Phone:</span> +61 2 1234 5678
