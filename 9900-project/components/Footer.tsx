@@ -8,20 +8,22 @@ const Footer = () => {
     <footer className="bg-gray-100  pb-8">
       {/* Newsletter Subscription */}
       <div className="bg-black py-4 mb-4">
-        <div className="container mx-auto px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="text-white text-xl md:text-2xl font-medium mb-4 md:mb-0 md:ml-8">
+        <div className="container mx-auto px-4 lg:px-16">
+          <div className="flex flex-col items-center lg:flex-row lg:items-center lg:justify-between">
+            <div className="text-white text-xl md:text-2xl font-medium mb-4 text-center lg:text-left lg:mb-0 lg:ml-8 lg:text-3xl">
               Don't miss our newsletter!
             </div>
-            <div className="flex w-full md:w-auto md:mr-8">
-              <input
-                type="email"
-                placeholder="Email address"
-                className="px-16 py-3 rounded-full w-full md:w-80 focus:outline-none bg-white border border-gray-300"
-              />
-              <Button className="bg-white text-black hover:bg-gray-200 rounded-full px-8 py-3 font-medium border border-l-0 border-gray-300">
-                Subscribe
-              </Button>
+            <div className="flex w-full max-w-xl lg:w-auto lg:mr-8">
+              <div className="flex h-12 w-full">
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  className="px-6 py-3 rounded-l-full w-full lg:w-[400px] focus:outline-none bg-white border border-gray-300 h-full"
+                />
+                <Button className="bg-white text-black hover:bg-gray-200 rounded-r-full px-8 h-full font-medium border border-l-0 border-gray-300">
+                  Subscribe
+                </Button>
+              </div>
             </div>
           </div>
         </div>
