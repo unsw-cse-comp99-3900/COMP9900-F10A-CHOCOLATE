@@ -24,14 +24,19 @@ import {
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Eye, EyeOff } from "lucide-react"
 
 // Define form schema
 const formSchema = z.object({
   accountType: z.string().min(1, { message: "Please select an account type" }),
-  fullName: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  userName: z.string().min(2, { message: "Username must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-})
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
 export default function RegisterPage() {
   // Create a form instance
@@ -39,13 +44,15 @@ export default function RegisterPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       accountType: "",
-      fullName: "",
+      userName: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
-  const [accountType, setAccountType] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // This will be type-safe and validated
@@ -88,11 +95,123 @@ export default function RegisterPage() {
                                                 </SelectGroup>
                                             </SelectContent>
                                         </Select>
-                                        <FormMessage />
+                                        <FormMessage className="text-red-500 text-sm mt-1" />
                                     </FormItem>
                                 )}
                             />
 
+                            <FormField
+                                control={form.control}
+                                name="userName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Username</FormLabel>
+                                        <FormControl>
+                                            <input 
+                                                className="flex h-10 w-full rounded-md border border-black bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A4B494]" 
+                                                placeholder="Enter your username" 
+                                                {...field} 
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm mt-1" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Email</FormLabel>
+                                        <FormControl>
+                                            <input 
+                                                type="email"
+                                                className="flex h-10 w-full rounded-md border border-black bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A4B494]" 
+                                                placeholder="example@email.com" 
+                                                {...field} 
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm mt-1" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Password</FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <input 
+                                                    type={showPassword ? "text" : "password"}
+                                                    className="flex h-10 w-full rounded-md border border-black bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A4B494]" 
+                                                    placeholder="*************" 
+                                                    {...field} 
+                                                />
+                                                <button 
+                                                    type="button"
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                >
+                                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm mt-1" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="confirmPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Confirm Password</FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <input 
+                                                    type={showConfirmPassword ? "text" : "password"}
+                                                    className="flex h-10 w-full rounded-md border border-black bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A4B494]" 
+                                                    placeholder="*************" 
+                                                    {...field} 
+                                                />
+                                                <button 
+                                                    type="button"
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                >
+                                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage className="text-red-500 text-sm mt-1" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <div className="space-y-4 pt-4">
+                                <div className="flex items-start">
+                                    <input
+                                        id="terms"
+                                        name="terms"
+                                        type="checkbox"
+                                        className="h-4 w-4 text-[#A4B494] focus:ring-[#A4B494] border-gray-300 rounded mt-1"
+                                    />
+                                    <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
+                                        By creating an account, you agree to our Terms & Conditions
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-center mt-6">
+                                <Button type="submit" className="w-1/2 bg-black text-white hover:bg-black/30">
+                                    Register
+                                </Button>
+                            </div>
                         </form>
                     </Form>
                     </div>
