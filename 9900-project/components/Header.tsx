@@ -37,9 +37,9 @@ const Header = () => {
   return (
     <header className="w-full">
       {/* Top header section */}
-      <div className="w-full bg-gray-100 py-4 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between">
+      <div className="w-full bg-gray-100 py-4 px-4 md:px-12 flex flex-col md:flex-row items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="w-48 h-16 relative">
+        <Link href="/" className="w-32 h-16 relative">
           <Image 
             src="/farmerplace-logo.png" 
             alt="Fresh Harvest Logo" 
@@ -63,10 +63,19 @@ const Header = () => {
 
         {/* Login/Register and Cart */}
         <div className="flex items-center space-x-4">
-          {/* Login/Register button */}
-          <Button className="bg-black text-white px-6 py-6 rounded hover:bg-black/50 transition-colors">
-            Login/Register 
-          </Button>
+          {/* Login and Register buttons */}
+          <div className="flex space-x-2">
+            <Link href="/login-page">
+              <Button className="bg-black text-white px-4 py-5 rounded hover:bg-black/50 transition-colors w-28 h-12">
+                Login
+              </Button>
+            </Link>
+            <Link href="/register-page">
+              <Button className="bg-white text-black border border-black px-4 py-5 rounded hover:bg-gray-100 transition-colors w-28 h-12">
+                Register
+              </Button>
+            </Link>
+          </div>
 
           {/* Shopping cart */}
           <div className="flex items-center">
