@@ -89,7 +89,7 @@ export default function RegisterPage() {
                                           <FormLabel>Account Type</FormLabel>
                                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                                               <FormControl>
-                                                  <SelectTrigger className="w-full bg-white border-black rounded-md">
+                                                  <SelectTrigger className="w-full bg-white border border-gray-300 rounded-md shadow-sm hover:shadow-md transition-shadow focus:ring-1 focus:ring-green-500 focus:border-green-500">
                                                       <SelectValue placeholder="Choose your account type" />
                                                   </SelectTrigger>
                                               </FormControl>
@@ -113,7 +113,7 @@ export default function RegisterPage() {
                                           <FormLabel>Username</FormLabel>
                                           <FormControl>
                                               <input 
-                                                  className="flex h-10 w-full rounded-md border border-black bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A4B494]" 
+                                                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 shadow-sm hover:shadow-md transition-shadow" 
                                                   placeholder="Enter your username" 
                                                   {...field} 
                                               />
@@ -132,7 +132,7 @@ export default function RegisterPage() {
                                           <FormControl>
                                               <input 
                                                   type="email"
-                                                  className="flex h-10 w-full rounded-md border border-black bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A4B494]" 
+                                                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 shadow-sm hover:shadow-md transition-shadow" 
                                                   placeholder="example@email.com" 
                                                   {...field} 
                                               />
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                                               <div className="relative">
                                                   <input 
                                                       type={showPassword ? "text" : "password"}
-                                                      className="flex h-10 w-full rounded-md border border-black bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A4B494]" 
+                                                      className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 shadow-sm hover:shadow-md transition-shadow" 
                                                       placeholder="*************" 
                                                       {...field} 
                                                   />
@@ -180,7 +180,7 @@ export default function RegisterPage() {
                                               <div className="relative">
                                                   <input 
                                                       type={showConfirmPassword ? "text" : "password"}
-                                                      className="flex h-10 w-full rounded-md border border-black bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A4B494]" 
+                                                      className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 shadow-sm hover:shadow-md transition-shadow" 
                                                       placeholder="*************" 
                                                       {...field} 
                                                   />
@@ -204,7 +204,7 @@ export default function RegisterPage() {
                                           id="terms"
                                           name="terms"
                                           type="checkbox"
-                                          className="h-4 w-4 text-[#A4B494] focus:ring-[#A4B494] border-gray-300 rounded mt-1"
+                                          className="h-4 w-4 text-green-500 focus:ring-1 focus:ring-green-500 border-gray-300 rounded mt-1 shadow-sm"
                                       />
                                       <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
                                           By creating an account, you agree to our Terms & Conditions
@@ -213,7 +213,7 @@ export default function RegisterPage() {
                               </div>
 
                               <div className="flex justify-center mt-6">
-                                  <Button type="submit" className="w-1/2 bg-green-600 text-white font-bold hover:bg-green-600/30">
+                                  <Button type="submit" className="w-1/2 bg-green-600 text-white font-bold hover:bg-green-600/30 shadow-md hover:shadow-lg transition-shadow">
                                       Register
                                   </Button>
                               </div>
@@ -226,7 +226,7 @@ export default function RegisterPage() {
                               <img 
                                   src="/register-img.jpeg" 
                                   alt="Registration illustration" 
-                                  className="w-full h-auto rounded-lg"
+                                  className="w-full h-auto rounded-lg shadow-lg"
                               />
                           </div>
                       </div>
