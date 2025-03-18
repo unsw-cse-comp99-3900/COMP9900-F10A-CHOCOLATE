@@ -1,26 +1,49 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function Home() {
-  // Add this effect to handle scrolling to sections based on hash
+  const [farmers, setFarmers] = useState<{ id: string; name: string; image: string; description: string }[]>([]);
+
   useEffect(() => {
-    // Get the hash from the URL (e.g., #categories)
+    async function fetchFarmers() {
+      try {
+        const response = await fetch("http://localhost:5001/api/stores");
+        const data = await response.json();
+  
+        console.log("Fetched farmers data:", data); 
+  
+        if (!Array.isArray(data)) {
+          throw new Error("API did not return an array");
+        }
+  
+        // 修正前端数据映射
+        const formattedFarmers = data.slice(0, 4).map(store => ({
+          id: store.owner?.id || "unknown", 
+          name: store.owner?.name || "Unknown Farmer", 
+          image: store.imageUrl || "/farmer1.jpg", 
+          description: store.description || "No description available" 
+        }));
+  
+        setFarmers(formattedFarmers);
+      } catch (error) {
+        console.error("Failed to fetch farmers:", error);
+      }
+    }
+  
+    fetchFarmers();
+  }, []);
+
+  // 处理 hash 滚动
+  useEffect(() => {
     const hash = window.location.hash;
-    
     if (hash) {
-      // Remove the # symbol to get the ID
       const id = hash.substring(1);
-      
-      // Find the element with that ID
       const element = document.getElementById(id);
-      
-      // If the element exists, scroll to it
       if (element) {
-        // Small delay to ensure the page is fully loaded
         setTimeout(() => {
           element.scrollIntoView({ behavior: "smooth" });
         }, 100);
@@ -74,7 +97,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-6 mt-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 col-span-2">
             {[{ name: 'Fruit', image: '/fruit.jpg' },
-              { name: 'Veggie', image: '/veggie.jpg' },
+              { name: 'Vegetable', image: '/vegetable.jpg' },
               { name: 'Wheat', image: '/wheat.jpg' },
               { name: 'Sugar cane', image: '/sugar-cane.jpg' }
             ].map((category) => (
@@ -131,39 +154,37 @@ export default function Home() {
           </div>
           <p className="mt-4 text-gray-600">
             Meet our top farmers, dedicated to bringing you the freshest, highest-quality produce <br className="hidden md:block"/>
-            straight from the farm
+            straight from the farm.
           </p>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-          {[
-            { name: 'Farmer1', image: '/farmer.png', slogan: 'Farm fresh every day!' },
-            { name: 'Farmer2', image: '/farmer.png', slogan: 'Quality you can taste.' },
-            { name: 'Farmer3', image: '/farmer.png', slogan: 'Bringing nature to your plate.' },
-            { name: 'Farmer4', image: '/farmer.png', slogan: 'Sustainably grown, locally known.' },
-          ].map((farmer) => (
-            <div 
-              key={farmer.name} 
-              className="group relative h-80 block overflow-hidden rounded-lg shadow-lg"
-            >
-              <Link href={`/farmer-page/${farmer.name}`} className="group relative block overflow-hidden w-full h-full">
-                <Image
-                  src={farmer.image}
-                  alt={farmer.name}
-                  fill
-                  className="object-cover group-hover:scale-110 transition"
-                  sizes="100vw"
-                />
-                <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
-                  <h3 className="text-4xl font-bold">{farmer.name}</h3>
-                  <p className="mt-1 text-sm font-normal">{farmer.slogan}</p>
-                  <Button className="mt-4 bg-white/70 text-black px-4 py-2 rounded-md shadow-md hover:bg-white/80 transition cursor-pointer">
-                    MEET FARMER
-                  </Button>
-                </div>
-              </Link>
-            </div>
-          ))}
-        </div>
+
+        {/* 如果 farmers 为空，显示 "Loading..." */}
+        {farmers.length === 0 ? (
+          <p className="text-gray-500">Loading farmers...</p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            {farmers.map((farmer) => (
+              <div key={farmer.id} className="group relative h-80 block overflow-hidden rounded-lg shadow-lg">
+                <Link href={`/farmer-page/${farmer.id}`} className="group relative block overflow-hidden w-full h-full">
+                  <Image
+                    src={farmer.image}
+                    alt={farmer.name}
+                    fill
+                    className="object-cover group-hover:scale-110 transition"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
+                    <h3 className="text-4xl font-bold">{farmer.name}</h3>
+                    <p className="mt-1 text-sm font-normal">{farmer.description}</p>
+                    <Button className="mt-4 bg-white/70 text-black px-4 py-2 rounded-md shadow-md hover:bg-white/80 transition cursor-pointer">
+                      MEET FARMER
+                    </Button>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
