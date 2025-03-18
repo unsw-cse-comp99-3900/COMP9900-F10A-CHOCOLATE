@@ -66,15 +66,13 @@ model Store {
   @@index([ownerId])
 }
 
-// 产品类别枚举
+// 产品类别枚举 - 根据客户需求修改
 enum ProductCategory {
-  VEGETABLES
-  FRUITS
-  DAIRY
-  MEAT
-  EGGS
-  GRAINS
-  OTHER
+  WHEAT     // 小麦
+  SUGAR_CANE // 甘蔗
+  LENTILS   // 扁豆
+  FRUIT     // 水果
+  VEGGIE    // 蔬菜
 }
 
 // 产品模型
@@ -85,7 +83,7 @@ model Product {
   price       Float
   imageUrl    String?
   quantity    Int             @default(0)
-  category    ProductCategory @default(OTHER)
+  category    ProductCategory @default(VEGGIE)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 

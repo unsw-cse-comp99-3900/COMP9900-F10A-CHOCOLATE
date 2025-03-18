@@ -299,16 +299,14 @@ router.delete('/:id', authenticateToken, async (req, res) => {
  */
 router.get('/categories', async (req, res) => {
   try {
-    // 返回所有可用的产品类别
+    // 返回所有可用的产品类别 - 已更新为客户需要的类别
     res.json({
       categories: [
-        'VEGETABLES',
-        'FRUITS',
-        'DAIRY',
-        'MEAT',
-        'EGGS',
-        'GRAINS',
-        'OTHER'
+        'WHEAT',      // 小麦
+        'SUGAR_CANE', // 甘蔗
+        'LENTILS',    // 扁豆
+        'FRUIT',      // 水果
+        'VEGGIE'      // 蔬菜
       ]
     });
   } catch (error) {
