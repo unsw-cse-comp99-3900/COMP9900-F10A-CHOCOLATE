@@ -9,12 +9,30 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  const handleSubmit = (e: React.FormEvent) => {
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   // Handle login logic here
+  //   console.log('Login attempt with:', { email, password });
+  // };
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login attempt with:', { email, password });
+  
+    const response = await fetch("http://localhost:5001/api/users/login", { // ✅ 修改 API 地址
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+  
+    const data = await response.json();
+  
+    if (response.ok) {
+      console.log("Login successful:", data);
+      // 这里可以存储 Token 或跳转页面
+    } else {
+      console.error("Login failed:", data.message);
+    }
   };
-
+  
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
