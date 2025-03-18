@@ -10,73 +10,72 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
-  const [currentCategory, setCurrentCategory] = useState<string>("all products");
+  const [currentCategory, setCurrentCategory] = useState<string>("All Products");
   const [currentPage, setCurrentPage] = useState(1);
   const [categoriesArray, setCategoriesArray] = useState<{ name: string; count: number }[]>([]);
   const productsPerPage = 9;
 
   useEffect(() => {
     params.then(({ slug }) => {
-      const decodedSlug = decodeURIComponent(slug).toLowerCase(); // **统一转换为小写**
+      const decodedSlug = decodeURIComponent(slug).toLowerCase(); 
       setSlug(decodedSlug);
-      setCurrentCategory(decodedSlug === "shop" ? "all products" : decodedSlug);
+      setCurrentCategory(decodedSlug === "shop" ? "All Products" : decodedSlug);
     });
   }, [params]);
 
   useEffect(() => {
-  async function fetchProducts() {
-    try {
-      const response = await fetch("http://localhost:5001/api/stores");
-      if (!response.ok) throw new Error("Failed to fetch products");
-
-      const stores = await response.json();
-      let allProducts: any[] = [];
-
-      // **获取所有产品，并转换 category 为小写**
-      stores.forEach((store: any) => {
-        store.products.forEach((product: any) => {
-          allProducts.push({
-            id: product.id,
-            name: product.name,
-            imageUrl: product.imageUrl,
-            price: product.price,
-            category: product.category.toLowerCase(), // **转换为小写**
-            storeId: store.id,
-            farmer: store.owner.name,
+    async function fetchProducts() {
+      try {
+        const response = await fetch("http://localhost:5001/api/stores");
+        if (!response.ok) throw new Error("Failed to fetch products");
+  
+        const stores = await response.json();
+        let allProducts: any[] = [];
+  
+        // **获取所有产品，并转换 category 为小写**
+        stores.forEach((store: any) => {
+          store.products.forEach((product: any) => {
+            allProducts.push({
+              id: product.id,
+              name: product.name,
+              imageUrl: product.imageUrl,
+              price: product.price,
+              category: product.category.toLowerCase(), // **转换为小写**
+              storeId: store.id,
+              farmer: store.owner.name,
+            });
           });
         });
-      });
-
-      // **匹配 slug 和 category（忽略单复数）**
-      let filtered = allProducts;
-      if (slug !== "shop") {
-        filtered = allProducts.filter((product) =>
-          product.category.includes(slug) // **允许模糊匹配**
+  
+        // **匹配 slug 和 category（忽略单复数）**
+        let filtered = allProducts;
+        if (slug !== "shop") {
+          filtered = allProducts.filter((product) =>
+            product.category.includes(slug) // **允许模糊匹配**
+          );
+        }
+  
+        // **检查过滤是否成功**
+        console.log("Filtered Products:", filtered);
+  
+        // **计算分类信息**
+        const categoryMap = allProducts.reduce((acc: Record<string, number>, product) => {
+          acc[product.category] = (acc[product.category] || 0) + 1;
+          return acc;
+        }, {});
+  
+        setCategoriesArray(
+          Object.entries(categoryMap).map(([name, count]) => ({ name, count }))
         );
+        setProducts(allProducts);
+        setFilteredProducts(filtered); // **初始时显示所有符合 slug 的产品**
+      } catch (error) {
+        console.error("Error fetching products:", error);
       }
-
-      // **检查过滤是否成功**
-      console.log("Filtered Products:", filtered);
-
-      // **计算分类信息**
-      const categoryMap = allProducts.reduce((acc: Record<string, number>, product) => {
-        acc[product.category] = (acc[product.category] || 0) + 1;
-        return acc;
-      }, {});
-
-      setCategoriesArray(
-        Object.entries(categoryMap).map(([name, count]) => ({ name, count }))
-      );
-      setProducts(allProducts);
-      setFilteredProducts(filtered); // **初始时显示所有符合 `slug` 的产品**
-    } catch (error) {
-      console.error("Error fetching products:", error);
     }
-  }
-
-  fetchProducts();
-}, [slug]);
-
+  
+    fetchProducts();
+  }, [slug]);
 
   let bannerText = slug === "shop" ? "SHOP" : slug.charAt(0).toUpperCase() + slug.slice(1);
 
@@ -85,18 +84,16 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     let filtered = products;
 
     // **按类别筛选**
-    if (category && category.toLowerCase() !== "all products") {
-      filtered = filtered.filter((product) => product.category === category.toLowerCase());
-      setCurrentCategory(category.toLowerCase());
+    if (category && category !== "All Products") {
+      filtered = filtered.filter((product) => product.category === category);
+      setCurrentCategory(category);
     } else {
-      setCurrentCategory("all products");
+      setCurrentCategory("All Products");
     }
 
     // **按价格筛选**
     if (priceRange.length === 2) {
-      filtered = filtered.filter(
-        (product) => product.price >= priceRange[0] && product.price <= priceRange[1]
-      );
+      filtered = filtered.filter((product) => product.price >= priceRange[0] && product.price <= priceRange[1]);
     }
 
     setFilteredProducts(filtered);
@@ -116,7 +113,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         <div className="flex items-center gap-4">
           {/* 返回按钮 */}
           <button
-            onClick={() => router.push(`/#categories`)}
+            onClick={() => router.push(slug === "shop" ? `/` : `/#categories`)}
             className="w-12 h-12 bg-black text-white flex items-center justify-center rounded-full hover:bg-gray-800 transition"
           >
             <ArrowLeft className="w-6 h-6" />
@@ -131,16 +128,13 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       <section className="container mx-auto px-6 py-10 flex flex-col md:flex-row md:justify-between">
         {/* 筛选侧边栏 */}
         <div className="w-full md:w-1/4 md:mr-6">
-          <Filter
-            categories={[{ name: "all products", count: products.length }, ...categoriesArray]}
-            onFilterChange={handleFilterChange}
-          />
+          <Filter categories={[{ name: "All Products", count: products.length }, ...categoriesArray]} onFilterChange={handleFilterChange} />
         </div>
 
         {/* 产品列表 */}
         <div className="flex-1 bg-white p-6 shadow rounded-lg">
           <h2 className="text-2xl font-semibold mb-4">
-            {currentCategory === "all products" ? "All Products" : `Products in ${currentCategory}`}
+            {currentCategory === "All Products" ? "All Products" : `Products in ${currentCategory}`}
           </h2>
 
           {/* 产品网格 */}
@@ -149,11 +143,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               paginatedProducts.map((product) => (
                 <div key={product.id} className="bg-white p-4 rounded-lg shadow border">
                   <div className="w-full h-40 bg-gray-200 flex items-center justify-center rounded-md">
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-cover rounded-md"
-                    />
+                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover rounded-md" />
                   </div>
                   <h3 className="text-md font-semibold mt-2">{product.name}</h3>
                   <p className="text-gray-600 text-sm">{product.farmer}</p>
@@ -171,25 +161,25 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 border rounded-md hover:bg-gray-200"
+                className={`px-4 py-2 border rounded-md ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"}`}
               >
                 Previous
               </button>
+
               {Array.from({ length: totalPages }, (_, i) => (
                 <button
                   key={i + 1}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`px-4 py-2 border rounded-md ${
-                    currentPage === i + 1 ? "bg-black text-white" : "hover:bg-gray-200"
-                  }`}
+                  className={`px-4 py-2 border rounded-md ${currentPage === i + 1 ? "bg-black text-white" : "hover:bg-gray-200"}`}
                 >
                   {i + 1}
                 </button>
               ))}
+
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 border rounded-md hover:bg-gray-200"
+                className={`px-4 py-2 border rounded-md ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"}`}
               >
                 Next
               </button>

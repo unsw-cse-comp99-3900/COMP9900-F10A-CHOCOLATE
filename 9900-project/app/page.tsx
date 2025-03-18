@@ -90,14 +90,14 @@ export default function Home() {
             <div className="hidden sm:block w-24 h-px bg-gray-600 transform rotate-3 translate-y-1" />
           </div>
           <p className="mt-4 text-gray-600">
-            Explore our award-winning range of fresh fruit, vegetables, meats <br className="hidden md:block"/>
-            and grazing platters and more.
+            Explore our award-winning range of fresh fruit, vegetables, wheat, suger cane <br className="hidden md:block"/>
+            and lentils and more.
           </p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-6 mt-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 col-span-2">
             {[{ name: 'Fruit', image: '/fruit.jpg' },
-              { name: 'Vegetable', image: '/vegetable.jpg' },
+              { name: 'Veggie', image: '/veggie.jpg' },
               { name: 'Wheat', image: '/wheat.jpg' },
               { name: 'Sugar cane', image: '/sugar-cane.jpg' }
             ].map((category) => (
