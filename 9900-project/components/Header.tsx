@@ -4,7 +4,7 @@ import { FormEvent, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from './ui/button';
-import { ShoppingCart, Search, Menu, X, ChevronDown, ChevronRight, User, LogOut } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, ChevronDown, ChevronRight, User, LogOut,Wheat,Apple,CandyCane,LeafyGreen,Vegan} from 'lucide-react';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -26,48 +26,32 @@ const Header = () => {
   const [searchType, setSearchType] = useState("product");
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   
-  // Default categories to use
-  const defaultCategories = ['Wheat', 'SUGAR_CANE', 'LENTILS', 'FRUIT', 'VEGGIE'];
-  
-  // Initialize with default categories
-  const [categories, setCategories] = useState<string[]>(defaultCategories);
+  // Define fixed categories with subcategories
+  const categoryData = [
+    {
+      name: 'Wheat',
+      subcategories: ['Whole Wheat', 'Wheat Flour', 'Wheat Bran', 'Semolina', 'Wheat Germ']
+    },
+    {
+      name: 'SugarCane',
+      subcategories: ['Raw Sugar', 'Brown Sugar', 'Molasses', 'Jaggery', 'Cane Syrup']
+    },
+    {
+      name: 'Lentils',
+      subcategories: ['Red Lentils', 'Green Lentils', 'Yellow Lentils', 'Black Lentils', 'Split Peas']
+    },
+    {
+      name: 'Fruit',
+      subcategories: ['Apples', 'Bananas', 'Oranges', 'Berries', 'Grapes']
+    },
+    {
+      name: 'Veggie',
+      subcategories: ['Tomatoes', 'Carrots', 'Spinach', 'Broccoli', 'Potatoes']
+    }
+  ];
   
   const { isLoggedIn, user, logout } = useAuth();
   const router = useRouter();
-
-  // Fetch categories from backend
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        console.log("fetching categories from API!");
-        
-        const response = await fetch("http://localhost:5001/api/products/categories");
-        
-        if (response.ok) {
-          console.log("response.ok!");
-          const data = await response.json();
-          if (data.categories && data.categories.length > 0) {
-            console.log("Categories received:", data.categories);
-            setCategories(data.categories);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        // Already using default categories, no need to set again
-      }
-    };
-
-    fetchCategories();
-  }, []);
-  
-  // Format category name for display
-  const formatCategoryName = (category: string) => {
-    // Convert SNAKE_CASE to Title Case
-    return category
-      .split('_')
-      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-      .join(' ');
-  };
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -267,14 +251,31 @@ const Header = () => {
               </div>
               {mobileShopOpen && (
                 <div className="bg-gray-800 py-1">
-                  {categories.map((category, index) => (
-                    <Link 
-                      key={index} 
-                      href={`/shop/category/${category.toLowerCase()}`} 
-                      className="block py-2 px-8 hover:bg-gray-700"
-                    >
-                      {formatCategoryName(category)}
-                    </Link>
+                  {categoryData.map((category, index) => (
+                    <div key={index}>
+                      <Link 
+                        href={`/product-page/${category.name.toLowerCase()}`} 
+                        className="block py-2 px-8 hover:bg-gray-700 font-medium border-b border-gray-700 text-white"
+                      >
+                        {category.name === 'Wheat' && <Wheat size={20} />}
+                        {category.name === 'SugarCane' && <CandyCane size={20} />}
+                        {category.name === 'Lentils' && <Vegan size={20} />}
+                        {category.name === 'Fruit' && <Apple size={20} />}
+                        {category.name === 'Veggie' && <LeafyGreen size={20} />}
+                        {category.name}
+                      </Link>
+                      <div className="ml-4 pl-6 border-l border-gray-700 space-y-1 py-1">
+                        {category.subcategories.map((subcategory, subIndex) => (
+                          <Link 
+                            key={subIndex} 
+                            href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase()}`}
+                            className="block py-1 px-4 text-gray-400 hover:text-white text-sm"
+                          >
+                            {subcategory}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -322,16 +323,35 @@ const Header = () => {
                 SHOP
                 <ChevronDown className="ml-1 h-4 w-4" />
               </button>
-              <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-auto min-w-[600px] z-50">
-                <div className="grid grid-cols-5 gap-4 p-4">
-                  {categories.map((category, index) => (
+              <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-auto min-w-[800px] z-50">
+                <div className="grid grid-cols-5 gap-8 p-8">
+                  {categoryData.map((category, index) => (
                     <div key={index} className="col-span-1">
                       <Link 
-                        href={`/shop/products/${category}`}
-                        className="block px-4 py-2 hover:bg-gray-100 rounded font-medium text-gray-800 hover:text-green-600 transition-colors"
+                        href={`/product-page/${category.name.toLowerCase()}`}
+                        className="flex items-center px-4 py-3 rounded font-semibold text-gray-800 hover:text-green-600 transition-colors text-lg border-b border-gray-200 mb-3"
                       >
-                        {formatCategoryName(category)}
+                        <span className="mr-2 text-green-600">
+                          {category.name === 'Wheat' && <Wheat size={22} />}
+                          {category.name === 'SugarCane' && <CandyCane size={22} />}
+                          {category.name === 'Lentils' && <LeafyGreen size={22} />}
+                          {category.name === 'Fruit' && <Apple size={22} />}
+                          {category.name === 'Veggie' && <Vegan size={22} />}
+                        </span>
+                        {category.name}
                       </Link>
+                      <ul className="space-y-2 mt-3">
+                        {category.subcategories.map((subcategory, subIndex) => (
+                          <li key={subIndex}>
+                            <Link 
+                              href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase().replace(/\s+/g, '-')}`}
+                              className="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded"
+                            >
+                              {subcategory}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   ))}
                 </div>
