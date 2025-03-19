@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "农民市场应用后端API",
+  "description": "Backend API for the farmers' market application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

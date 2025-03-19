@@ -13,14 +13,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 用户角色枚举
+// User role enum
 enum UserRole {
   CUSTOMER
   FARMER
   ADMIN
 }
 
-// 订单状态枚举
+// Order status enum
 enum OrderStatus {
   PENDING
   PREPARED
@@ -29,7 +29,7 @@ enum OrderStatus {
   CANCELLED
 }
 
-// 用户模型 - 扩展原有模型
+// User model - Extended from the original model
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -42,14 +42,14 @@ model User {
   //updatedAt DateTime @updatedAt
   updatedAt DateTime @default(now())
 
-  // 关系
-  stores    Store[]      // 农民的店铺
-  orders    Order[]      // 顾客的订单
-  reviews   Review[]     // 用户的评价
-  cartItems Cart[]   // ➜ 反向关系：一个用户可以有多个购物车项
+  // Relationships
+  stores    Store[]      // Stores owned by farmers
+  orders    Order[]      // Orders placed by customers
+  reviews   Review[]     // Reviews given by users
+  cartItems Cart[]       // A user can have multiple cart items
 }
 
-// 店铺模型
+// Store model
 model Store {
   id          String   @id @default(uuid())
   name        String
@@ -59,25 +59,25 @@ model Store {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // 关系
-  ownerId     String   // 店铺所有者（农民）
+  // Relationships
+  ownerId     String   // Store owner (Farmer)
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  products    Product[] // 店铺产品
-  reviews     Review[]  // 店铺评价
+  products    Product[] // Products in the store
+  reviews     Review[]  // Reviews for the store
 
   @@index([ownerId])
 }
 
-// 产品类别枚举 - 根据客户需求修改
+// Product category enum - Updated based on client requirements
 enum ProductCategory {
-  WHEAT     // 小麦
-  SUGAR_CANE // 甘蔗
-  LENTILS   // 扁豆
-  FRUIT     // 水果
-  VEGGIE    // 蔬菜
+  WHEAT      // Wheat
+  SUGAR_CANE // Sugar Cane
+  LENTILS    // Lentils
+  FRUIT      // Fruit
+  VEGGIE     // Vegetables
 }
 
-// 产品模型
+// Product model
 model Product {
   id          String          @id @default(uuid())
   name        String
@@ -89,17 +89,17 @@ model Product {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  // 关系
-  storeId     String          // 所属店铺
+  // Relationships
+  storeId     String          // Store to which the product belongs
   store       Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  orderItems  OrderItem[]     // 订单项目
-  cartItems Cart[]   // ➜ 反向关系：一个商品可以出现在多个购物车中
+  orderItems  OrderItem[]     // Items in an order
+  cartItems   Cart[]          // A product can be in multiple shopping carts
 
   @@index([storeId])
   @@index([category])
 }
 
-// 订单模型
+// Order model
 model Order {
   id          String      @id @default(uuid())
   totalAmount Float
@@ -107,52 +107,53 @@ model Order {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  // 关系
-  customerId  String      // 顾客
+  // Relationships
+  customerId  String      // Customer placing the order
   customer    User        @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  items       OrderItem[] // 订单项目
+  items       OrderItem[] // Items in the order
 
   @@index([customerId])
   @@index([status])
 }
 
-// 订单项目模型
+// Order item model
 model OrderItem {
   id        String   @id @default(uuid())
   quantity  Int
-  price     Float    // 下单时的价格
+  price     Float    // Price at the time of order
   createdAt DateTime @default(now())
 
-  // 关系
-  orderId   String   // 所属订单
+  // Relationships
+  orderId   String   // Order to which this item belongs
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String   // 产品
+  productId String   // Product in the order
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([productId])
 }
 
-// 评价模型
+// Review model
 model Review {
   id        String   @id @default(uuid())
-  rating    Int      // 1-5星评价
+  rating    Int      // 1-5 star rating
   comment   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // 关系
-  userId    String   // 评价者
+  // Relationships
+  userId    String   // Reviewer
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  storeId   String   // 被评价的店铺
+  storeId   String   // Store being reviewed
   store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([storeId])
 }
 
+// Cart model
 model Cart {
-  id         String   @id @default(uuid())  // 购物车 ID
+  id         String   @id @default(uuid())  // Shopping cart ID
   customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId String
 
