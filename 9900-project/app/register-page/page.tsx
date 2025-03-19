@@ -24,8 +24,10 @@ import {
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
 import Head from 'next/head';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/AuthContext';
 
 // Define form schema
 const formSchema = z.object({
@@ -33,13 +35,22 @@ const formSchema = z.object({
   userName: z.string().min(2, { message: "Username must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
+  const { login } = useAuth();
+
   // Create a form instance
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,17 +60,82 @@ export default function RegisterPage() {
       email: "",
       password: "",
       confirmPassword: "",
+      address: "",
+      phone: "",
     },
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // This will be type-safe and validated
-    console.log(values);
-    // Handle form submission
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Reset error and success states
+    setApiError(null);
+    setRegistrationSuccess(false);
+    setEmailExists(false);
+    setIsLoading(true);
+    
+    try {
+      // Prepare the data according to the API documentation
+      const userData = {
+        email: values.email,
+        password: values.password,
+        name: values.userName,
+        phone: values.phone || '',
+        address: values.address || '',
+        role: values.accountType.toUpperCase(), // Convert to uppercase as per API format
+      };
+      
+      // Send registration request to API
+      const response = await fetch("http://localhost:5001/api/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {  // registration is successful
+        console.log("Registration successful:", data);
+        setRegistrationSuccess(true);
+        
+        // Use the auth context to set logged in status
+        // Assuming the API returns user data and token on registration
+        // If not, this may need to be adjusted
+        if (data.token) {
+          login(data, data.token);
+          
+          // Store user data and token
+          sessionStorage.setItem('token', data.token);
+          sessionStorage.setItem('user', JSON.stringify(data));
+        }
+        
+        // Redirect to home page after successful registration
+        setTimeout(() => {
+          router.push('/');
+        }, 2000);
+      } else {  // registration failed
+        console.error("Registration failed:", data.message);
+        
+        // Check if the error is about email already existing
+        if (data.message.includes("该邮箱已被注册")) {
+          setEmailExists(true);
+        } else {
+          setApiError(data.message || "Registration failed. Please try again.");
+        }
+      }
+      
+    } catch (error) {
+      console.error("Error during registration:", error);
+      setApiError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
+
+  const goToLandingPage = () => {
+    router.push('/');
+  };
  
   return (
     <>
@@ -75,6 +151,41 @@ export default function RegisterPage() {
                 Join our community of farmers and food enthusiasts. Register for Fresh Harvest today.
                 </p>
               </div>
+
+              {/* Email Exists Alert */}
+              {emailExists && (
+                <div className="mb-4 p-4 bg-amber-100 border border-amber-400 text-amber-700 rounded flex flex-col items-center">
+                  <div className="flex items-center mb-2">
+                    <AlertCircle className="h-5 w-5 mr-2" />
+                    <span className="font-medium">This email is already registered!</span>
+                  </div>
+                  <p className="mb-3 text-center">
+                    It looks like you already have an account. Would you like to login instead?
+                  </p>
+                  <Button 
+                    onClick={() => router.push('/login-page')}
+                    className="bg-amber-600 text-white hover:bg-amber-700"
+                  >
+                    Go to Login Page
+                  </Button>
+                </div>
+              )}
+
+              {/* API Error Message */}
+              {apiError && !emailExists && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
+                  <AlertCircle className="h-5 w-5 mr-2" />
+                  <span> {apiError} </span>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {registrationSuccess && (
+                <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded flex items-center">
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  <span>Registration successful! Redirecting to login page...</span>
+                </div>
+              )}
 
               <div className="p-8 bg-[#A4B494]/30 rounded-lg shadow-xl">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -95,8 +206,8 @@ export default function RegisterPage() {
                                               </FormControl>
                                               <SelectContent>
                                                   <SelectGroup>
-                                                      <SelectItem value="Customer">Customer</SelectItem>
-                                                      <SelectItem value="Farmer">Farmer</SelectItem>
+                                                      <SelectItem value="CUSTOMER">Customer</SelectItem>
+                                                      <SelectItem value="FARMER">Farmer</SelectItem>
                                                   </SelectGroup>
                                               </SelectContent>
                                           </Select>
@@ -134,6 +245,44 @@ export default function RegisterPage() {
                                                   type="email"
                                                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 shadow-sm hover:shadow-md transition-shadow" 
                                                   placeholder="example@email.com" 
+                                                  {...field} 
+                                              />
+                                          </FormControl>
+                                          <FormMessage className="text-red-500 text-sm mt-1" />
+                                      </FormItem>
+                                  )}
+                              />
+
+                              <FormField
+                                  control={form.control}
+                                  name="phone"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                          <FormLabel>Phone (Optional)</FormLabel>
+                                          <FormControl>
+                                              <input 
+                                                  type="tel"
+                                                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 shadow-sm hover:shadow-md transition-shadow" 
+                                                  placeholder="Phone number" 
+                                                  {...field} 
+                                              />
+                                          </FormControl>
+                                          <FormMessage className="text-red-500 text-sm mt-1" />
+                                      </FormItem>
+                                  )}
+                              />
+
+                              <FormField
+                                  control={form.control}
+                                  name="address"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                          <FormLabel>Address (Optional)</FormLabel>
+                                          <FormControl>
+                                              <input 
+                                                  type="text"
+                                                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 shadow-sm hover:shadow-md transition-shadow" 
+                                                  placeholder="Your address" 
                                                   {...field} 
                                               />
                                           </FormControl>
@@ -213,8 +362,12 @@ export default function RegisterPage() {
                               </div>
 
                               <div className="flex justify-center mt-6">
-                                  <Button type="submit" className="w-1/2 bg-green-600 text-white font-bold hover:bg-green-600/30 shadow-md hover:shadow-lg transition-shadow">
-                                      Register
+                                  <Button 
+                                      type="submit" 
+                                      className="w-1/2 bg-green-600 text-white font-bold hover:bg-green-600/30 shadow-md hover:shadow-lg transition-shadow"
+                                      disabled={isLoading}
+                                  >
+                                      {isLoading ? 'Registering...' : 'Register'}
                                   </Button>
                               </div>
                           </form>

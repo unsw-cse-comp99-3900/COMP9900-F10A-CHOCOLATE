@@ -23,8 +23,10 @@ import {
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
 import Head from 'next/head';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/AuthContext';
 
 // Define form schema
 const formSchema = z.object({
@@ -34,6 +36,13 @@ const formSchema = z.object({
 });
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [invalidCredentials, setInvalidCredentials] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
+
   // Create a form instance
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,10 +56,71 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // This will be type-safe and validated
-    console.log(values);
-    // Handle form submission
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Reset error and success states
+    setLoginError(null);
+    setInvalidCredentials(false);
+    setLoginSuccess(false);
+    setIsLoading(true);
+
+    try {
+      // Prepare login data
+      const loginData = {
+        email: values.email,
+        password: values.password,
+        role: values.accountType.toUpperCase()
+      };
+      
+      // Send login request to API
+      const response = await fetch("http://localhost:5001/api/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginData),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log("Login successful:", data);
+        setLoginSuccess(true);
+        
+        // Use the auth context to set logged in status
+        login(data.user, data.token);
+        
+        // Store token and user data
+        if (rememberMe) {
+          // Store in localStorage for persistent login
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+        } else {
+          // Store in sessionStorage for session-only login
+          sessionStorage.setItem('token', data.token);
+          sessionStorage.setItem('user', JSON.stringify(data.user));
+        }
+        
+        // Redirect to home page after successful login
+        setTimeout(() => {
+          router.push('/');
+        }, 1500);
+      } else {
+        console.error("Login failed:", data.message);
+        
+        // Handle different error types
+        if (data.message.includes('密码错误') || 
+            data.message.includes('用户不存在')) {
+          setInvalidCredentials(true);
+        } else {
+          setLoginError(data.message || "Login failed. Please try again.");
+        }
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      setLoginError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -59,16 +129,42 @@ export default function LoginPage() {
         <title>Sign In | Fresh Harvest</title>
         <meta name="description" content="Sign in to your Fresh Harvest account to access your profile and start shopping." />
       </Head>
-      <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-12">
+      <div className="min-h-180 bg-white py-8 px-4 sm:px-6 lg:px-12">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h1 className="text-xl font-bold text-black md:text-2xl md:font-bold lg:text-3xl lg:font-bold">Sign In to Your Account</h1>
             <p className="mt-2 text-sm text-gray-600 md:text-base max-w-2xl mx-auto">
               Welcome back! Sign in to access your account and continue your fresh food journey.
             </p>
           </div>
 
-          <div className="p-8 bg-[#A4B494]/30 rounded-lg shadow-xl">
+          {/* Invalid Credentials Alert */}
+          {invalidCredentials && (
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex flex-col items-center">
+              <div className="flex items-center mb-2">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                <span className="font-medium">Invalid email or password!</span>
+              </div>
+            </div>
+          )}
+
+          {/* Other Error Message */}
+          {loginError && !invalidCredentials && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {loginSuccess && (
+            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded flex items-center">
+              <CheckCircle className="h-5 w-5 mr-2" />
+              <span>Login successful! Redirecting to home page...</span>
+            </div>
+          )}
+
+          <div className="p-6 bg-[#A4B494]/30 rounded-lg shadow-xl mb-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="flex flex-col justify-center px-10">
                 <Form {...form}>
@@ -88,8 +184,8 @@ export default function LoginPage() {
                             </FormControl>
                             <SelectContent>
                               <SelectGroup>
-                                <SelectItem value="Customer">Customer</SelectItem>
-                                <SelectItem value="Farmer">Farmer</SelectItem>
+                                <SelectItem value="CUSTOMER">Customer</SelectItem>
+                                <SelectItem value="FARMER">Farmer</SelectItem>
                               </SelectGroup>
                             </SelectContent>
                           </Select>
@@ -160,16 +256,15 @@ export default function LoginPage() {
                         </label>
                       </div>
 
-                      <div className="text-sm">
-                        <Link href="#" className="font-medium text-green-600 hover:text-green-500">
-                          Forgot your password?
-                        </Link>
-                      </div>
                     </div>
 
                     <div className="flex justify-center mt-6">
-                      <Button type="submit" className="w-1/2 bg-green-600 text-white font-bold hover:bg-green-600/30 shadow-md hover:shadow-lg transition-shadow">
-                        Sign In
+                      <Button 
+                        type="submit" 
+                        className="w-1/2 bg-green-600 text-white font-bold hover:bg-green-600/30 shadow-md hover:shadow-lg transition-shadow"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Signing In...' : 'Sign In'}
                       </Button>
                     </div>
 
