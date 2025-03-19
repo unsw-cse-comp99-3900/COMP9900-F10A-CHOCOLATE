@@ -5,18 +5,18 @@ const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
 const router = express.Router();
 
-// 身份验证中间件
+// Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: '未提供认证令牌' });
+    return res.status(401).json({ message: 'Authorization token not provided' });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: '无效或过期的令牌' });
+      return res.status(403).json({ message: 'Invalid or expired token' });
     }
     req.user = user;
     next();
@@ -24,8 +24,8 @@ const authenticateToken = (req, res, next) => {
 };
 
 /**
- * 🔹 获取所有产品 (GET /api/products)
- * 公开接口，可搜索和过滤
+ * 🔹 Get all products (GET /api/products)
+ * Public API, supports search and filtering
  */
 router.get('/', async (req, res) => {
   try {
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
       limit = 20 
     } = req.query;
 
-    // 构建过滤条件
+    // Build filter conditions
     const where = {};
     
     if (search) {
@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
       if (maxPrice) where.price.lte = parseFloat(maxPrice);
     }
 
-    // 构建排序条件
+    // Build sorting condition
     let orderBy = {};
     switch (sort) {
       case 'price_asc':
@@ -81,11 +81,11 @@ router.get('/', async (req, res) => {
         orderBy = { price: 'asc' };
     }
 
-    // 分页
+    // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const take = parseInt(limit);
 
-    // 查询产品
+    // Query products
     const products = await prisma.product.findMany({
       where,
       orderBy,
@@ -102,7 +102,7 @@ router.get('/', async (req, res) => {
       }
     });
 
-    // 获取总数
+    // Get total count
     const total = await prisma.product.count({ where });
 
     res.json({
@@ -116,13 +116,13 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error fetching products:", error);
-    res.status(500).json({ message: '获取产品列表失败' });
+    res.status(500).json({ message: 'Failed to retrieve product list' });
   }
 });
 
 /**
- * 🔹 获取产品详情 (GET /api/products/:id)
- * 公开接口
+ * 🔹 Get product details (GET /api/products/:id)
+ * Public API
  */
 router.get('/:id', async (req, res) => {
   try {
@@ -149,47 +149,47 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!product) {
-      return res.status(404).json({ message: '产品不存在' });
+      return res.status(404).json({ message: 'Product not found' });
     }
 
     res.json(product);
   } catch (error) {
     console.error("❌ Error fetching product:", error);
-    res.status(500).json({ message: '获取产品详情失败' });
+    res.status(500).json({ message: 'Failed to retrieve product details' });
   }
 });
 
 /**
- * 🔹 创建产品 (POST /api/products)
- * 需要店铺所有者权限
+ * 🔹 Create a product (POST /api/products)
+ * Requires store owner permission
  */
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const { storeId, name, description, price, quantity, imageUrl, category } = req.body;
     
-    // 检查必填字段
+    // Check required fields
     if (!storeId || !name || price === undefined) {
-      return res.status(400).json({ message: '店铺ID、名称和价格是必填项' });
+      return res.status(400).json({ message: 'Store ID, name, and price are required' });
     }
 
-    // 检查价格是否有效
+    // Validate price
     if (isNaN(price) || price < 0) {
-      return res.status(400).json({ message: '价格必须是正数' });
+      return res.status(400).json({ message: 'Price must be a positive number' });
     }
 
-    // 获取店铺信息
+    // Retrieve store information
     const store = await prisma.store.findUnique({ where: { id: storeId } });
     
     if (!store) {
-      return res.status(404).json({ message: '店铺不存在' });
+      return res.status(404).json({ message: 'Store not found' });
     }
     
-    // 检查是否为店铺所有者
+    // Check if user is the store owner
     if (store.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: '权限不足，只有店铺所有者可以添加产品' });
+      return res.status(403).json({ message: 'Permission denied, only store owners can add products' });
     }
     
-    // 创建产品
+    // Create product
     const newProduct = await prisma.product.create({
       data: {
         name,
@@ -205,41 +205,41 @@ router.post('/', authenticateToken, async (req, res) => {
     res.status(201).json(newProduct);
   } catch (error) {
     console.error("❌ Error creating product:", error);
-    res.status(500).json({ message: '创建产品失败' });
+    res.status(500).json({ message: 'Failed to create product' });
   }
 });
 
 /**
- * 🔹 更新产品 (PUT /api/products/:id)
- * 需要店铺所有者权限
+ * 🔹 Update a product (PUT /api/products/:id)
+ * Requires store owner permission
  */
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, price, quantity, imageUrl, category } = req.body;
     
-    // 获取产品和店铺信息
+    // Retrieve product and store information
     const product = await prisma.product.findUnique({
       where: { id },
       include: { store: true }
     });
     
     if (!product) {
-      return res.status(404).json({ message: '产品不存在' });
+      return res.status(404).json({ message: 'Product not found' });
     }
     
-    // 检查权限
+    // Check permissions
     if (product.store.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: '权限不足，只有店铺所有者可以更新产品' });
+      return res.status(403).json({ message: 'Permission denied, only store owners can update products' });
     }
     
-    // 准备更新数据
+    // Prepare update data
     const updateData = {};
     if (name) updateData.name = name;
     if (description !== undefined) updateData.description = description;
     if (price !== undefined) {
       if (isNaN(price) || price < 0) {
-        return res.status(400).json({ message: '价格必须是正数' });
+        return res.status(400).json({ message: 'Price must be a positive number' });
       }
       updateData.price = parseFloat(price);
     }
@@ -247,7 +247,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
     if (category) updateData.category = category;
     
-    // 更新产品
+    // Update product
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: updateData
@@ -256,39 +256,40 @@ router.put('/:id', authenticateToken, async (req, res) => {
     res.json(updatedProduct);
   } catch (error) {
     console.error("❌ Error updating product:", error);
-    res.status(500).json({ message: '更新产品失败' });
+    res.status(500).json({ message: 'Failed to update product' });
   }
 });
 
 /**
- * 🔹 删除产品 (DELETE /api/products/:id)
- * 需要店铺所有者权限
+ * 🔹 Delete a product (DELETE /api/products/:id)
+ * Requires store owner permission
  */
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     
-    // 获取产品和店铺信息
+    // Retrieve product and store information
     const product = await prisma.product.findUnique({
       where: { id },
       include: { store: true }
     });
     
     if (!product) {
-      return res.status(404).json({ message: '产品不存在' });
+      return res.status(404).json({ message: 'Product not found' });
     }
     
-    // 检查权限
+    // Check permissions
     if (product.store.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: '权限不足，只有店铺所有者可以删除产品' });
+      return res.status(403).json({ message: 'Permission denied, only store owners can delete products' });
     }
     
-    // 删除产品
+    // Delete product
     await prisma.product.delete({ where: { id } });
     
-    res.json({ message: '产品已成功删除' });
+    res.json({ message: 'Product successfully deleted' });
   } catch (error) {
     console.error("❌ Error deleting product:", error);
+    res.status(500).json({ message: 'Failed to delete product' });
     res.status(500).json({ message: '删除产品失败' });
   }
 });
@@ -315,4 +316,4 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

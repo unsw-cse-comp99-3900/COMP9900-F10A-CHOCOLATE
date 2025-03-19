@@ -5,18 +5,18 @@ const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
 const router = express.Router();
 
-// 身份验证中间件
+// Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: '未提供认证令牌' });
+    return res.status(401).json({ message: 'Authorization token not provided' });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: '无效或过期的令牌' });
+      return res.status(403).json({ message: 'Invalid or expired token' });
     }
     req.user = user;
     next();
@@ -24,8 +24,8 @@ const authenticateToken = (req, res, next) => {
 };
 
 /**
- * 🔹 获取所有店铺 (GET /api/stores)
- * 公开接口，任何人都可以查看
+ * 🔹 Get all stores (GET /api/stores)
+ * Public API, accessible by anyone
  */
 router.get('/', async (req, res) => {
   try {
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
             imageUrl: true,
             category: true,
           },
-          take: 5 // 只取前5个产品作为预览
+          take: 5 // Fetch only the first 5 products as a preview
         },
         owner: {
           select: {
@@ -53,13 +53,13 @@ router.get('/', async (req, res) => {
     res.json(stores);
   } catch (error) {
     console.error("❌ Error fetching stores:", error);
-    res.status(500).json({ message: '获取店铺列表失败' });
+    res.status(500).json({ message: 'Failed to retrieve store list' });
   }
 });
 
 /**
- * 🔹 获取店铺详情 (GET /api/stores/:id)
- * 公开接口，任何人都可以查看
+ * 🔹 Get store details (GET /api/stores/:id)
+ * Public API, accessible by anyone
  */
 router.get('/:id', async (req, res) => {
   try {
@@ -98,7 +98,7 @@ router.get('/:id', async (req, res) => {
               }
             }
           },
-          take: 10, // 只显示10条评论
+          take: 10, // Display only the latest 10 reviews
           orderBy: {
             createdAt: 'desc'
           }
@@ -107,44 +107,44 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!store) {
-      return res.status(404).json({ message: '店铺不存在' });
+      return res.status(404).json({ message: 'Store not found' });
     }
 
     res.json(store);
   } catch (error) {
-    console.error("❌ Error fetching store:", error);
-    res.status(500).json({ message: '获取店铺详情失败' });
+    console.error("❌ Error fetching store details:", error);
+    res.status(500).json({ message: 'Failed to retrieve store details' });
   }
 });
 
 /**
- * 🔹 创建店铺 (POST /api/stores)
- * 需要农民角色权限
+ * 🔹 Create a store (POST /api/stores)
+ * Requires farmer role
  */
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const { name, description, imageUrl } = req.body;
     
-    // 检查用户角色
+    // Check user role
     if (req.user.role !== 'FARMER' && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: '权限不足，只有农民可以创建店铺' });
+      return res.status(403).json({ message: 'Permission denied, only farmers can create stores' });
     }
 
-    // 检查必填字段
+    // Check required fields
     if (!name) {
-      return res.status(400).json({ message: '店铺名称是必填项' });
+      return res.status(400).json({ message: 'Store name is required' });
     }
 
-    // 检查用户是否已有店铺
+    // Check if user already owns a store
     const existingStore = await prisma.store.findFirst({
       where: { ownerId: req.user.id }
     });
 
     if (existingStore) {
-      return res.status(400).json({ message: '您已经拥有一个店铺' });
+      return res.status(400).json({ message: 'You already own a store' });
     }
 
-    // 创建店铺
+    // Create store
     const newStore = await prisma.store.create({
       data: {
         name,
@@ -157,38 +157,38 @@ router.post('/', authenticateToken, async (req, res) => {
     res.status(201).json(newStore);
   } catch (error) {
     console.error("❌ Error creating store:", error);
-    res.status(500).json({ message: '创建店铺失败' });
+    res.status(500).json({ message: 'Failed to create store' });
   }
 });
 
 /**
- * 🔹 更新店铺信息 (PUT /api/stores/:id)
- * 只允许店铺所有者或管理员
+ * 🔹 Update store details (PUT /api/stores/:id)
+ * Only store owner or admin can update
  */
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, imageUrl } = req.body;
     
-    // 获取店铺信息
+    // Retrieve store information
     const store = await prisma.store.findUnique({ where: { id } });
     
     if (!store) {
-      return res.status(404).json({ message: '店铺不存在' });
+      return res.status(404).json({ message: 'Store not found' });
     }
     
-    // 检查权限
+    // Check permissions
     if (store.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: '权限不足，只有店铺所有者可以更新店铺信息' });
+      return res.status(403).json({ message: 'Permission denied, only store owners can update store details' });
     }
     
-    // 准备更新数据
+    // Prepare update data
     const updateData = {};
     if (name) updateData.name = name;
     if (description !== undefined) updateData.description = description;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
     
-    // 更新店铺
+    // Update store
     const updatedStore = await prisma.store.update({
       where: { id },
       data: updateData
@@ -197,79 +197,67 @@ router.put('/:id', authenticateToken, async (req, res) => {
     res.json(updatedStore);
   } catch (error) {
     console.error("❌ Error updating store:", error);
-    res.status(500).json({ message: '更新店铺信息失败' });
+    res.status(500).json({ message: 'Failed to update store' });
   }
 });
 
 /**
- * 🔹 删除店铺 (DELETE /api/stores/:id)
- * 只允许店铺所有者或管理员
+ * 🔹 Delete a store (DELETE /api/stores/:id)
+ * Only store owner or admin can delete
  */
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     
-    // 获取店铺信息
+    // Retrieve store information
     const store = await prisma.store.findUnique({ where: { id } });
     
     if (!store) {
-      return res.status(404).json({ message: '店铺不存在' });
+      return res.status(404).json({ message: 'Store not found' });
     }
     
-    // 检查权限
+    // Check permissions
     if (store.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: '权限不足，只有店铺所有者可以删除店铺' });
+      return res.status(403).json({ message: 'Permission denied, only store owners can delete the store' });
     }
     
-    // 删除店铺（Prisma会自动级联删除关联的产品）
+    // Delete store (Prisma will automatically cascade delete associated products)
     await prisma.store.delete({ where: { id } });
     
-    res.json({ message: '店铺已成功删除' });
+    res.json({ message: 'Store successfully deleted' });
   } catch (error) {
     console.error("❌ Error deleting store:", error);
-    res.status(500).json({ message: '删除店铺失败' });
+    res.status(500).json({ message: 'Failed to delete store' });
   }
 });
 
 /**
- * 🔹 创建店铺评价 (POST /api/stores/:id/reviews)
- * 只允许非店铺所有者的已登录用户
+ * 🔹 Create a store review (POST /api/stores/:id/reviews)
+ * Only logged-in users who are not the store owner can submit reviews
  */
 router.post('/:id/reviews', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { rating, comment } = req.body;
     
-    // 检查必填字段
+    // Validate rating range
     if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ message: '评分必须在1-5之间' });
+      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
     }
     
-    // 获取店铺信息
+    // Retrieve store information
     const store = await prisma.store.findUnique({ where: { id } });
     
     if (!store) {
-      return res.status(404).json({ message: '店铺不存在' });
+      return res.status(404).json({ message: 'Store not found' });
     }
     
-    // 店铺所有者不能评价自己的店铺
+    // Store owner cannot review their own store
     if (store.ownerId === req.user.id) {
-      return res.status(403).json({ message: '店铺所有者不能评价自己的店铺' });
+      return res.status(403).json({ message: 'Store owners cannot review their own store' });
     }
     
-    // 检查用户是否已经评价过该店铺
-    const existingReview = await prisma.review.findFirst({
-      where: {
-        storeId: id,
-        userId: req.user.id
-      }
-    });
-    
-    if (existingReview) {
-      return res.status(400).json({ message: '您已经评价过该店铺' });
-    }
-    
-    // 创建评价
+    // Create review
     const newReview = await prisma.review.create({
       data: {
         rating,
@@ -278,25 +266,12 @@ router.post('/:id/reviews', authenticateToken, async (req, res) => {
         storeId: id
       }
     });
-    
-    // 更新店铺的平均评分
-    const storeReviews = await prisma.review.findMany({
-      where: { storeId: id },
-      select: { rating: true }
-    });
-    
-    const avgRating = storeReviews.reduce((sum, review) => sum + review.rating, 0) / storeReviews.length;
-    
-    await prisma.store.update({
-      where: { id },
-      data: { rating: avgRating }
-    });
-    
+
     res.status(201).json(newReview);
   } catch (error) {
     console.error("❌ Error creating review:", error);
-    res.status(500).json({ message: '创建评价失败' });
+    res.status(500).json({ message: 'Failed to create review' });
   }
 });
 
-module.exports = router; 
+module.exports = router;
