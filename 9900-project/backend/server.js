@@ -7,6 +7,7 @@ const userRoutes = require('./routes/users');
 const storeRoutes = require('./routes/stores');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
+const cartRoutes = require('./routes/cart');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/cart', cartRoutes);
 
 // 根路由
 app.get('/', (req, res) => {
@@ -35,7 +37,8 @@ app.use((err, req, res, next) => {
 });
 
 // 启动服务器
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5004;
 app.listen(PORT, () => {
   console.log(`服务器已在端口 ${PORT} 上启动`);
 });
+

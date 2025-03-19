@@ -39,12 +39,14 @@ model User {
   phone     String?
   address   String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  //updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 
   // 关系
   stores    Store[]      // 农民的店铺
   orders    Order[]      // 顾客的订单
   reviews   Review[]     // 用户的评价
+  cartItems Cart[]   // ➜ 反向关系：一个用户可以有多个购物车项
 }
 
 // 店铺模型
@@ -91,6 +93,7 @@ model Product {
   storeId     String          // 所属店铺
   store       Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
   orderItems  OrderItem[]     // 订单项目
+  cartItems Cart[]   // ➜ 反向关系：一个商品可以出现在多个购物车中
 
   @@index([storeId])
   @@index([category])
@@ -146,4 +149,16 @@ model Review {
 
   @@index([userId])
   @@index([storeId])
+}
+
+model Cart {
+  id         String   @id @default(uuid())  // 购物车 ID
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String
+
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+
+  quantity   Int      @default(1)
+  createdAt  DateTime @default(now())
 }

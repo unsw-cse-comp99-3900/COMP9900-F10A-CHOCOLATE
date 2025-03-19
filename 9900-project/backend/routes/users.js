@@ -181,8 +181,8 @@ router.post('/login', async (req, res) => {
     }
 
     // 验证密码
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
+    // const validPassword = await bcrypt.compare(password, user.password);
+    if (password !== user.password) {
       console.log("❌ Incorrect password!");
       return res.status(400).json({ message: '密码错误' });
     }
