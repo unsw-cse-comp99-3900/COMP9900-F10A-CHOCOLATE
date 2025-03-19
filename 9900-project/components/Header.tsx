@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from './ui/button';
@@ -26,8 +26,48 @@ const Header = () => {
   const [searchType, setSearchType] = useState("product");
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   
+  // Default categories to use
+  const defaultCategories = ['Wheat', 'SUGAR_CANE', 'LENTILS', 'FRUIT', 'VEGGIE'];
+  
+  // Initialize with default categories
+  const [categories, setCategories] = useState<string[]>(defaultCategories);
+  
   const { isLoggedIn, user, logout } = useAuth();
   const router = useRouter();
+
+  // Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        console.log("fetching categories from API!");
+        
+        const response = await fetch("http://localhost:5001/api/products/categories");
+        
+        if (response.ok) {
+          console.log("response.ok!");
+          const data = await response.json();
+          if (data.categories && data.categories.length > 0) {
+            console.log("Categories received:", data.categories);
+            setCategories(data.categories);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        // Already using default categories, no need to set again
+      }
+    };
+
+    fetchCategories();
+  }, []);
+  
+  // Format category name for display
+  const formatCategoryName = (category: string) => {
+    // Convert SNAKE_CASE to Title Case
+    return category
+      .split('_')
+      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(' ');
+  };
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -227,9 +267,15 @@ const Header = () => {
               </div>
               {mobileShopOpen && (
                 <div className="bg-gray-800 py-1">
-                  <Link href="/shop/categories" className="block py-2 px-8 hover:bg-gray-700">
-                    // TODO: add categories
-                  </Link>
+                  {categories.map((category, index) => (
+                    <Link 
+                      key={index} 
+                      href={`/shop/category/${category.toLowerCase()}`} 
+                      className="block py-2 px-8 hover:bg-gray-700"
+                    >
+                      {formatCategoryName(category)}
+                    </Link>
+                  ))}
                 </div>
               )}
             </li>
@@ -276,11 +322,18 @@ const Header = () => {
                 SHOP
                 <ChevronDown className="ml-1 h-4 w-4" />
               </button>
-              <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-[200px] z-50">
-                <div className="py-2">
-                  <Link href="/shop/categories" className="block px-4 py-2 hover:bg-gray-100">
-                    Categories
-                  </Link>
+              <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-auto min-w-[600px] z-50">
+                <div className="grid grid-cols-5 gap-4 p-4">
+                  {categories.map((category, index) => (
+                    <div key={index} className="col-span-1">
+                      <Link 
+                        href={`/shop/products/${category}`}
+                        className="block px-4 py-2 hover:bg-gray-100 rounded font-medium text-gray-800 hover:text-green-600 transition-colors"
+                      >
+                        {formatCategoryName(category)}
+                      </Link>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
