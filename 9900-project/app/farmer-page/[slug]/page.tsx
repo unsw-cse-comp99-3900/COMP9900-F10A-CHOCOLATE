@@ -153,7 +153,10 @@ export default function FarmerPage({ params }: { params: Promise<{ slug: string 
             {/* 产品列表 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedProducts.map((product) => (
-                <div key={product.id} className="bg-white p-4 rounded-lg shadow border">
+                <div key={product.id} 
+                className="bg-white p-4 rounded-lg shadow border cursor-pointer hover:shadow-xl transition-shadowr"
+                onClick={() => router.push(`/productDetail-page?id=${product.id}`)}
+                >
                   <div className="w-full h-40 bg-gray-200 flex items-center justify-center rounded-md">
                     <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover rounded-md" />
                   </div>
