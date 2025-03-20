@@ -100,15 +100,12 @@ export default function RegisterPage() {
         setRegistrationSuccess(true);
         
         // Use the auth context to set logged in status
-        // Assuming the API returns user data and token on registration
-        // If not, this may need to be adjusted
-        if (data.token) {
-          login(data, data.token);
-          
-          // Store user data and token
-          sessionStorage.setItem('token', data.token);
-          sessionStorage.setItem('user', JSON.stringify(data));
-        }
+        // Login with the returned user data and token
+        login(data.user, data.token);
+        
+        // Store user data and token in sessionStorage for session persistence
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('user', JSON.stringify(data.user));
         
         // Redirect to home page after successful registration
         setTimeout(() => {
@@ -118,7 +115,7 @@ export default function RegisterPage() {
         console.error("Registration failed:", data.message);
         
         // Check if the error is about email already existing
-        if (data.message.includes("该邮箱已被注册")) {
+        if (data.message.includes("Email is already registered")) {
           setEmailExists(true);
         } else {
           setApiError(data.message || "Registration failed. Please try again.");
@@ -136,7 +133,7 @@ export default function RegisterPage() {
   const goToLandingPage = () => {
     router.push('/');
   };
- 
+
   return (
     <>
       <Head>
@@ -183,7 +180,7 @@ export default function RegisterPage() {
               {registrationSuccess && (
                 <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded flex items-center">
                   <CheckCircle className="h-5 w-5 mr-2" />
-                  <span>Registration successful! Redirecting to login page...</span>
+                  <span>Registration successful! Redirecting to home page...</span>
                 </div>
               )}
 
@@ -386,7 +383,7 @@ export default function RegisterPage() {
                   </div>
               </div>
           </div>
-      </div>
+    </div>
     </>
   );
 }

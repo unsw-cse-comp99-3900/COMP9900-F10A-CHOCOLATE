@@ -106,14 +106,8 @@ export default function LoginPage() {
         }, 1500);
       } else {
         console.error("Login failed:", data.message);
-        
-        // Handle different error types
-        if (data.message.includes('密码错误') || 
-            data.message.includes('用户不存在')) {
-          setInvalidCredentials(true);
-        } else {
-          setLoginError(data.message || "Login failed. Please try again.");
-        }
+        setInvalidCredentials(true);
+      
       }
     } catch (error) {
       console.error("Error during login:", error);

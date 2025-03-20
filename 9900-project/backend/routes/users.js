@@ -146,11 +146,23 @@ router.post('/register', async (req, res) => {
       }
     });
 
+    // Create JWT token for automatic login after registration
+    const token = jwt.sign(
+      { id: newUser.id, email: newUser.email, role: newUser.role }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '24h' }
+    );
+
     // Exclude password from response
     const { password: _, ...userWithoutPassword } = newUser;
     console.log("✅ User Registered:", userWithoutPassword);
     
-    res.status(201).json(userWithoutPassword);
+    // Return token along with user data
+    res.status(201).json({
+      user: userWithoutPassword,
+      token,
+      message: "Registration successful"
+    });
   } catch (error) {
     console.error("❌ Registration Error:", error);
     res.status(500).json({ message: 'Registration failed', error: error.message });
@@ -164,7 +176,7 @@ router.post('/login', async (req, res) => {
   console.log("📢 Received Login Request:", req.body);
 
   const { email, password } = req.body;
-
+  
   try {
     // Check required fields
     if (!email || !password) {
@@ -178,8 +190,10 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'User does not exist' });
     }
 
-    // Verify password
-    if (password !== user.password) {
+    // verify password (hashed password)
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
       console.log("❌ Incorrect password!");
       return res.status(400).json({ message: 'Incorrect password' });
     }
