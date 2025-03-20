@@ -13,6 +13,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const [currentCategory, setCurrentCategory] = useState<string>("All Products");
   const [currentPage, setCurrentPage] = useState(1);
   const [categoriesArray, setCategoriesArray] = useState<{ name: string; count: number }[]>([]);
+  const [sortOption, setSortOption] = useState<string>("default");
   const productsPerPage = 9;
 
   useEffect(() => {
@@ -98,7 +99,40 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
     setFilteredProducts(filtered);
     setCurrentPage(1);
+    
+    // Apply current sort when filters change
+    applySorting(filtered);
   };
+  
+  // Handle sorting change
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortOption(e.target.value);
+    applySorting(filteredProducts);
+  };
+  
+  // Apply sorting to products
+  const applySorting = (products: any[]) => {
+    let sortedProducts = [...products];
+    
+    switch (sortOption) {
+      case "price-low-high":
+        sortedProducts.sort((a, b) => a.price - b.price);
+        break;
+      case "price-high-low":
+        sortedProducts.sort((a, b) => b.price - a.price);
+        break;
+      default:
+        // Keep default order
+        break;
+    }
+    
+    setFilteredProducts(sortedProducts);
+  };
+  
+  // Apply sorting when sort option changes
+  useEffect(() => {
+    applySorting(filteredProducts);
+  }, [sortOption]);
 
   // **分页逻辑**
   const startIndex = (currentPage - 1) * productsPerPage;
@@ -133,9 +167,26 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
         {/* 产品列表 */}
         <div className="flex-1 bg-white p-6 shadow rounded-lg">
-          <h2 className="text-2xl font-semibold mb-4">
-            {currentCategory === "All Products" ? "All Products" : `Products in ${currentCategory}`}
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">
+              {currentCategory === "All Products" ? "All Products" : `Products in ${currentCategory}`}
+            </h2>
+            
+            {/* Sort dropdown */}
+            <div className="flex items-center">
+              <label htmlFor="sort" className="mr-2 text-sm font-medium text-gray-700">Sort by:</label>
+              <select
+                id="sort"
+                value={sortOption}
+                onChange={handleSortChange}
+                className="border border-gray-300 rounded-md py-2 px-3 bg-white text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+              >
+                <option value="default">Default</option>
+                <option value="price-low-high">Price: Low to High</option>
+                <option value="price-high-low">Price: High to Low</option>
+              </select>
+            </div>
+          </div>
 
           {/* 产品网格 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
