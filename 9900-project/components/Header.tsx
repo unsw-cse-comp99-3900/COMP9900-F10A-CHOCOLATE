@@ -93,8 +93,8 @@ const Header = () => {
     <header className="w-full">
       {/* Top header section */}
       <div className="w-full bg-gray-100 py-4 px-4 md:px-12 flex flex-col md:flex-row items-center justify-between">
-        {/* Logo */}
-        <div className="w-full flex justify-between items-center md:w-auto">
+        {/* Mobile view - centered logo container */}
+        <div className="w-full flex justify-center md:hidden mb-4">
           <Link href="/" className="w-32 h-16 relative">
             <Image 
               src="/farmerplace-logo.png" 
@@ -106,10 +106,70 @@ const Header = () => {
           </Link>
         </div>
         
-        {/* Search bar */}
-        <div className="relative w-full md:w-auto md:flex-1 mx-4 my-4 md:my-0">
+        {/* Desktop view - logo and search in a row */}
+        <div className="hidden md:flex items-center md:w-auto md:flex-1">
+          {/* Desktop logo */}
+          <Link href="/" className="w-32 h-16 relative mr-4 flex-shrink-0">
+            <Image 
+              src="/farmerplace-logo.png" 
+              alt="Fresh Harvest Logo" 
+              fill
+              className="object-contain"
+              priority
+            />
+          </Link>
+          
+          {/* Search bar */}
+          <div className="relative w-full mx-4">
+            <form onSubmit={handleSubmit} className="flex">
+              <div className="relative w-24 md:w-32">
+                <button 
+                  type="button"
+                  onClick={toggleSearchDropdown}
+                  className="h-full py-3 px-2 border border-r-0 border-black/30 rounded-l-full bg-white flex items-center justify-between w-full text-left"
+                >
+                  <span className="truncate text-sm ml-2 font-semibold">{searchType === "product" ? "Products" : "Farmers"}</span>
+                  <ChevronDown className="h-4 w-4 ml-1 flex-shrink-0" />
+                </button>
+                
+                {searchDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-md border border-gray-200 shadow-lg z-50">
+                    <button 
+                      type="button"
+                      onClick={() => setSearchTypeAndClose("product")}
+                      className={`block w-full text-left px-4 py-2 ${searchType === "product" ? "bg-gray-100" : "hover:bg-gray-50"}`}
+                    >
+                      Products
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setSearchTypeAndClose("farmer")}
+                      className={`block w-full text-left px-4 py-2 ${searchType === "farmer" ? "bg-gray-100" : "hover:bg-gray-50"}`}
+                    >
+                      Farmers
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  name="input"
+                  placeholder={`Search for ${searchType === "product" ? "products" : "farmers"}...`}
+                  className="w-full py-3 pl-4 pr-12 border border-black/30 rounded-r-full focus:outline-none focus:ring-2 focus:ring-gray-200"
+                />
+                <button type="submit" className="absolute right-0 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  <Search className="rounded-full h-10 w-10 px-2 bg-black/30 hover:bg-green-600 text-white cursor-pointer" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        {/* Mobile search bar */}
+        <div className="relative w-full md:hidden my-2">
           <form onSubmit={handleSubmit} className="flex">
-            <div className="relative w-24 md:w-32">
+            <div className="relative w-24">
               <button 
                 type="button"
                 onClick={toggleSearchDropdown}
