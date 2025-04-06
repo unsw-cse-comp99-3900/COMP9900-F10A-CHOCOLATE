@@ -50,11 +50,21 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   
         // **匹配 slug 和 category（忽略单复数）**
         let filtered = allProducts;
+        // if (slug !== "shop") {
+        //   filtered = allProducts.filter((product) =>
+        //     product.category.includes(slug) // **允许模糊匹配**
+        //   );
+        // }
         if (slug !== "shop") {
+          const normalize = (str: string) =>
+            str.toLowerCase().replace(/[\s_]+/g, ""); // 把空格和下划线都去掉
+
+          const normalizedSlug = normalize(slug);
           filtered = allProducts.filter((product) =>
-            product.category.includes(slug) // **允许模糊匹配**
+            normalize(product.category).includes(normalizedSlug)
           );
         }
+
   
         // **检查过滤是否成功**
         console.log("Filtered Products:", filtered);
