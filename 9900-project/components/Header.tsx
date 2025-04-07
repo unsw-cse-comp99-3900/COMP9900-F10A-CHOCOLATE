@@ -81,6 +81,7 @@ const Header = () => {
   const handleLogout = () => {
     logout();
     setAccountDropdownOpen(false);
+    router.push("/login-page");
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
