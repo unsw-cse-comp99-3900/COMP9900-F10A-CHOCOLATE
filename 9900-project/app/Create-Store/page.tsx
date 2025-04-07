@@ -207,7 +207,7 @@ export default function CreateStore() {
                     />
                   </FormControl>
                   <FormDescription>
-                    An image URL for your store banner (optional)
+                    An image URL for your store banner (optional). URLs from image services like Unsplash or stock photo sites are supported.
                     {imageError && <span className="text-red-500 ml-2">Image URL is invalid. Using default image.</span>}
                   </FormDescription>
                   <FormMessage />

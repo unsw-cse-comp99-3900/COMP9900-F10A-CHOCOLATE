@@ -130,6 +130,8 @@ export default function FarmerOwnStorePage() {
               objectFit="cover"
               className="z-0"
               onError={handleImageError}
+              // NEW ADDED
+              unoptimized={store?.image?.includes('http')} // Skip optimization for external URLs
             />
           ) : (
             <img
