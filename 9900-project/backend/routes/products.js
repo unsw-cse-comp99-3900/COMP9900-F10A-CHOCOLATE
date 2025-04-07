@@ -290,29 +290,6 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("❌ Error deleting product:", error);
     res.status(500).json({ message: 'Failed to delete product' });
-    res.status(500).json({ message: '删除产品失败' });
-  }
-});
-
-/**
- * 🔹 获取产品类别列表 (GET /api/products/categories)
- * 公开接口
- */
-router.get('/categories', async (req, res) => {
-  try {
-    // 返回所有可用的产品类别 - 已更新为客户需要的类别
-    res.json({
-      categories: [
-        'WHEAT',      // 小麦
-        'SUGAR_CANE', // 甘蔗
-        'LENTILS',    // 扁豆
-        'FRUIT',      // 水果
-        'VEGGIE'      // 蔬菜
-      ]
-    });
-  } catch (error) {
-    console.error("❌ Error fetching categories:", error);
-    res.status(500).json({ message: '获取产品类别失败' });
   }
 });
 

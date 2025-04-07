@@ -24,8 +24,26 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'Authorization token not provided' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
 /**
- * 🔹 Get all users (GET /api/users)
+ * Get all users (GET /api/users)
  * Requires admin privileges
  */
 router.get('/', authenticateToken, async (req, res) => {
@@ -66,6 +84,16 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Permission denied' });
     }
 
+    // check role
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true }
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -76,14 +104,14 @@ router.get('/:id', authenticateToken, async (req, res) => {
         phone: true,
         address: true,
         createdAt: true,
-        stores: req.user.role === 'FARMER' ? {
+        stores: targetUser.role === 'FARMER' ? {
           select: {
             id: true,
             name: true,
             rating: true
           }
         } : undefined,
-        orders: req.user.role === 'CUSTOMER' ? {
+        orders: targetUser.role === 'CUSTOMER' ? {
           select: {
             id: true,
             totalAmount: true,
@@ -94,19 +122,19 @@ router.get('/:id', authenticateToken, async (req, res) => {
       }
     });
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    // if (!user) {
+    //   return res.status(404).json({ message: 'User not found' });
+    // }
 
     res.json(user);
   } catch (error) {
-    console.error("❌ Error fetching user:", error);
+    console.error(" Error fetching user:", error);
     res.status(500).json({ message: 'Failed to retrieve user data' });
   }
 });
 
 /**
- * 🔹 User registration (POST /api/users/register)
+ *  User registration (POST /api/users/register)
  */
 router.post('/register', async (req, res) => {
   console.log("📢 Received Register Request:", req.body);
@@ -146,23 +174,11 @@ router.post('/register', async (req, res) => {
       }
     });
 
-    // Create JWT token for automatic login after registration
-    const token = jwt.sign(
-      { id: newUser.id, email: newUser.email, role: newUser.role }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '24h' }
-    );
-
     // Exclude password from response
     const { password: _, ...userWithoutPassword } = newUser;
     console.log("✅ User Registered:", userWithoutPassword);
     
-    // Return token along with user data
-    res.status(201).json({
-      user: userWithoutPassword,
-      token,
-      message: "Registration successful"
-    });
+    res.status(201).json(userWithoutPassword);
   } catch (error) {
     console.error("❌ Registration Error:", error);
     res.status(500).json({ message: 'Registration failed', error: error.message });
@@ -176,7 +192,7 @@ router.post('/login', async (req, res) => {
   console.log("📢 Received Login Request:", req.body);
 
   const { email, password } = req.body;
-  
+
   try {
     // Check required fields
     if (!email || !password) {
@@ -186,15 +202,14 @@ router.post('/login', async (req, res) => {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      console.log("❌ User not found!");
+      console.log(" User not found!");
       return res.status(400).json({ message: 'User does not exist' });
     }
 
-    // verify password (hashed password)
+    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    
     if (!isPasswordValid) {
-      console.log("❌ Incorrect password!");
+      console.log(" Incorrect password!");
       return res.status(400).json({ message: 'Incorrect password' });
     }
 

@@ -7,6 +7,7 @@ const router = express.Router();
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
+
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -27,6 +28,9 @@ const authenticateToken = (req, res, next) => {
  * 🔹 Get current user's cart (GET /api/cart)
  */
 router.get('/', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'CUSTOMER') {
+    return res.status(403).json({ message: 'Only customers can access the cart' });
+  }
   try {
     const cartItems = await prisma.cart.findMany({
       where: { customerId: req.user.id },
@@ -45,7 +49,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
     res.json(cartItems);
   } catch (error) {
-    console.error("❌ Failed to retrieve cart:", error);
+    console.error(" Failed to retrieve cart:", error);
     res.status(500).json({ message: 'Failed to retrieve cart' });
   }
 });
@@ -54,6 +58,10 @@ router.get('/', authenticateToken, async (req, res) => {
  * 🔹 Add product to cart (POST /api/cart)
  */
 router.post('/', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'CUSTOMER') {
+    return res.status(403).json({ message: 'Only customers can add items to the cart' });
+  }
+  
   try {
     const { productId, quantity } = req.body;
 
@@ -96,6 +104,9 @@ router.post('/', authenticateToken, async (req, res) => {
  * 🔹 Remove product from cart (DELETE /api/cart/:id)
  */
 router.delete('/:id', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'CUSTOMER') {
+    return res.status(403).json({ message: 'Only customers can delete cart items' });
+  }
   try {
     const { id } = req.params;
 
@@ -115,7 +126,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
     res.json({ message: 'Cart item deleted' });
   } catch (error) {
-    console.error("❌ Failed to delete cart item:", error);
+    console.error(" Failed to delete cart item:", error);
     res.status(500).json({ message: 'Failed to delete cart item' });
   }
 });
