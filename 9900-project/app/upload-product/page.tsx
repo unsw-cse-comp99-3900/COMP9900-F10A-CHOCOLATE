@@ -46,8 +46,9 @@ export default function UploadProduct() {
   function onSubmit(values: z.infer<typeof formSchema>) {
   }
 
+
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center min-h-220">
       <h1 className="text-2xl font-bold mb-4">Upload Product</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full max-w-[85%] md:max-w-[65%] lg:max-w-[50%] xl:max-w-[40%]">

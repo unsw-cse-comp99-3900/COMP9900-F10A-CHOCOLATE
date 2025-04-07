@@ -106,7 +106,7 @@ export default function LoginPage() {
         }, 1500);
       } else {
         console.error("Login failed:", data.message);
-        setInvalidCredentials(true);
+          setInvalidCredentials(true);
       
       }
     } catch (error) {
