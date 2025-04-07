@@ -163,11 +163,8 @@ model Cart {
   quantity   Int      @default(1)
   createdAt  DateTime @default(now())
 }
-<<<<<<< HEAD
-=======
 
 //generator client {
 //  provider = "prisma-client-js"
 //  seed = "node prisma/seed.js"
 //}
->>>>>>> origin/boxing

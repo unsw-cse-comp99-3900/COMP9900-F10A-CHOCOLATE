@@ -38,13 +38,13 @@ export default function LandingFarmerNoStorePage() {
     <div className="min-h-screen bg-gray-100">
       {/* hero section */}
       <button
-        onClick={() => handleClick("/upload-product")}
+        onClick={() => handleClick("/Create-Store")}
         className="relative h-[350px] w-full flex items-center justify-center bg-gray-200 bg-cover bg-center cursor-pointer"
       >
         <div className="absolute inset-0 bg-black/40" /> {/* 模糊遮罩层 */}
         <div className="relative text-center text-white z-10 flex flex-col items-center justify-center">
-          <h1 className="text-5xl font-extrabold mb-4 leading-relaxed">You don’t have a store yet!</h1>
-          <p className="text-4xl font-medium mb-4 leading-relaxed">Create it one</p>
+          <h1 className="text-5xl font-extrabold mb-4 leading-relaxed">You don't have a store yet!</h1>
+          <p className="text-4xl font-medium mb-4 leading-relaxed">Create one now</p>
         </div>
       </button>
 
@@ -59,12 +59,12 @@ export default function LandingFarmerNoStorePage() {
         <div className="flex flex-col items-center justify-center flex-1">
             <h2 className="text-2xl font-semibold mb-4">OOPs, there is nothing here :(</h2>
             <button
-                onClick={() => handleClick("/upload-product")} // 触发跳转
+                onClick={() => handleClick("/Create-Store")} // 触发跳转
                 className="mt-6 flex justify-center items-center p-4 rounded-full cursor-pointer"
                 >
                 <PackageOpen size={200} className="text-gray-500" /> {/* 设置图标颜色为灰色 */}
             </button>
-            <p className="mt-4 text-lg">Upload your first product from here!</p>
+            <p className="mt-4 text-lg">Create your store to start selling products!</p>
         </div>
       </section>
     </div>
