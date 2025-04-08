@@ -190,8 +190,6 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'User does not exist' });
     }
 
-    console.log("❓❓❓❓❓user.role", user.role);
-    console.log("❓❓❓❓❓❓role", role);
     // check role
     if (user.role.toUpperCase() !== role.toUpperCase()) {
       console.log(` Role mismatch! Registered as '${user.role}', attempted login as '${role}'`);
