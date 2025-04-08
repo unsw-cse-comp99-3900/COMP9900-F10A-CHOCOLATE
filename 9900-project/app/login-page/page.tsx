@@ -141,7 +141,7 @@ export default function LoginPage() {
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex flex-col items-center">
               <div className="flex items-center mb-2">
                 <AlertCircle className="h-5 w-5 mr-2" />
-                <span className="font-medium">Invalid email or password!</span>
+                <span className="font-medium">Invalid account information! Please check your email, password and account type.</span>
               </div>
             </div>
           )}

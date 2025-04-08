@@ -131,7 +131,7 @@ export default function FarmerOwnStorePage() {
           <h1 className="text-5xl font-extrabold drop-shadow-md">{store.name}</h1>
           <p className="mt-4 text-xl font-medium drop-shadow-sm">{store.description}</p>
           <button
-            onClick={() => router.push("/account/profile")}
+            onClick={() => router.push("/Edit-Profile")}
             className="mt-6 px-6 py-3 bg-white text-black font-semibold rounded-md shadow hover:bg-gray-200 transition"
           >
             Change Profile
@@ -152,7 +152,7 @@ export default function FarmerOwnStorePage() {
                 {/* Upload a new product section */}
                 <div className="flex items-center space-x-4">
                     <button
-                    onClick={() => router.push("/product-upload-page")}
+                    onClick={() => router.push("/upload-product")}
                     className="bg-transparent border-none p-0 hover:bg-transparent focus:outline-none"
                     >
                     <CirclePlus size={24} className="cursor-pointer" />

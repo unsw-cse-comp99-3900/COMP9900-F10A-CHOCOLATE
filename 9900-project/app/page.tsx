@@ -165,7 +165,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             {farmers.map((farmer) => (
               <div key={farmer.id} className="group relative h-80 block overflow-hidden rounded-lg shadow-lg">
-                <Link href={`/farmer-page/${farmer.id}`} className="group relative block overflow-hidden w-full h-full">
+                <Link href={`/farmer-page/${encodeURIComponent(farmer.id)}`} className="group relative block overflow-hidden w-full h-full">
                   <Image
                     src={farmer.image}
                     alt={farmer.name}

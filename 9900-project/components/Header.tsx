@@ -267,22 +267,24 @@ const Header = () => {
               </div>
               
               {/* Desktop cart for logged in users */}
-              <div className="hidden md:block">
-                <Link href="/cart" className="relative p-2 hover:bg-gray-200 rounded-lg transition-colors group">
-                  <div className="flex items-center space-x-2">
-                    <div className="relative">
-                      <ShoppingCart size={24} className="text-black group-hover:text-green-600 transition-colors" />
-                      <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                        0
-                      </span>
+              {user?.role !== "FARMER" && (
+                <div className="hidden md:block">
+                  <Link href="/cart" className="relative p-2 hover:bg-gray-200 rounded-lg transition-colors group">
+                    <div className="flex items-center space-x-2">
+                      <div className="relative">
+                        <ShoppingCart size={24} className="text-black group-hover:text-green-600 transition-colors" />
+                        <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                          0
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium">Your Cart</span>
+                        <span className="text-sm font-bold">$0.00</span>
+                      </div>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium">Your Cart</span>
-                      <span className="text-sm font-bold">$0.00</span>
-                    </div>
-                  </div>
-                </Link>
-              </div>
+                  </Link>
+                </div>
+              )}
             </>
           ) : (    // if user is not logged in, display Login and Register buttons
             <>
@@ -337,6 +339,14 @@ const Header = () => {
         {/* Mobile menu */}
         <div className={`${mobileMenuOpen ? 'block' : 'hidden'} md:hidden`}>
           <ul className="flex flex-col py-2">
+            {/* Only show cart for non-farmers in mobile view */}
+            {user?.role !== "FARMER" && (
+              <li className="py-2 px-4 border-b border-gray-700">
+                <Link href="/cart" className="font-semibold hover:text-gray-300 transition-colors block">
+                  CART
+                </Link>
+              </li>
+            )}
             <li className="py-2 px-4 border-b border-gray-700">
               <Link href="/" className="font-semibold hover:text-gray-300 transition-colors block">
                 HOME

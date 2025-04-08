@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import Filter from "@/components/ui/filter";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
-  const [slug, setSlug] = useState<string>("");
   const router = useRouter();
+  // Unwrap the params Promise using React.use()
+  const unwrappedParams = use(params);
+  const slug = unwrappedParams.slug.toLowerCase();
+  
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [currentCategory, setCurrentCategory] = useState<string>("All Products");
@@ -16,13 +19,10 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const [sortOption, setSortOption] = useState<string>("default");
   const productsPerPage = 9;
 
+  // Set current category based on the slug
   useEffect(() => {
-    params.then(({ slug }) => {
-      const decodedSlug = decodeURIComponent(slug).toLowerCase(); 
-      setSlug(decodedSlug);
-      setCurrentCategory(decodedSlug === "shop" ? "All Products" : decodedSlug);
-    });
-  }, [params]);
+    setCurrentCategory(slug === "shop" ? "All Products" : slug);
+  }, [slug]);
 
   useEffect(() => {
     async function fetchProducts() {
