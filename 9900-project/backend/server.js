@@ -9,6 +9,7 @@ const storeRoutes = require('./routes/stores');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const cartRoutes = require('./routes/cart');
+const searchRoutes = require('./routes/search');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/stores', storeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/search', searchRoutes);
 
 // Root route
 app.get('/', (req, res) => {

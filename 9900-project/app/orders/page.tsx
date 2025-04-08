@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { Card, CardContent, Typography, Box, Chip, CircularProgress, Grid, Container } from '@mui/material';
+import { Card, CardContent, Typography, Box, Chip, CircularProgress, Grid, Container, Button, Pagination } from '@mui/material';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 interface OrderItem {
   id: string;
@@ -28,16 +29,40 @@ interface Order {
   items: OrderItem[];
 }
 
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 export default function OrdersPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1
+  });
+  const [statusFilter, setStatusFilter] = useState<string>('');
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/orders', {
+        const queryParams = new URLSearchParams({
+          page: pagination.page.toString(),
+          limit: pagination.limit.toString()
+        });
+        
+        if (statusFilter) {
+          queryParams.append('status', statusFilter);
+        }
+
+        const response = await fetch(`http://localhost:5001/api/orders?${queryParams}`, {
           headers: {
             'Authorization': `Bearer ${user?.token}`
           }
@@ -49,6 +74,7 @@ export default function OrdersPage() {
 
         const data = await response.json();
         setOrders(data.orders);
+        setPagination(data.pagination);
       } catch (err) {
         setError('Failed to load orders');
         console.error('Error fetching orders:', err);
@@ -60,7 +86,16 @@ export default function OrdersPage() {
     if (user?.token) {
       fetchOrders();
     }
-  }, [user]);
+  }, [user, pagination.page, statusFilter]);
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPagination(prev => ({ ...prev, page: value }));
+  };
+
+  const handleStatusFilter = (status: string) => {
+    setStatusFilter(status);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
 
   if (!user) {
     return (
@@ -100,6 +135,35 @@ export default function OrdersPage() {
         <Typography variant="h4" gutterBottom>
           My Orders
         </Typography>
+
+        {/* Status Filter */}
+        <Box sx={{ mb: 3, display: 'flex', gap: 1 }}>
+          <Button
+            variant={statusFilter === '' ? 'contained' : 'outlined'}
+            onClick={() => handleStatusFilter('')}
+          >
+            All
+          </Button>
+          <Button
+            variant={statusFilter === 'PENDING' ? 'contained' : 'outlined'}
+            onClick={() => handleStatusFilter('PENDING')}
+          >
+            Pending
+          </Button>
+          <Button
+            variant={statusFilter === 'COMPLETED' ? 'contained' : 'outlined'}
+            onClick={() => handleStatusFilter('COMPLETED')}
+          >
+            Completed
+          </Button>
+          <Button
+            variant={statusFilter === 'CANCELLED' ? 'contained' : 'outlined'}
+            onClick={() => handleStatusFilter('CANCELLED')}
+          >
+            Cancelled
+          </Button>
+        </Box>
+
         <Grid container spacing={3}>
           {orders.map((order) => (
             <Grid item xs={12} key={order.id}>
@@ -109,14 +173,24 @@ export default function OrdersPage() {
                     <Typography variant="h6">
                       Order #{order.id.slice(0, 8)}
                     </Typography>
-                    <Chip
-                      label={order.status}
-                      color={
-                        order.status === 'COMPLETED' ? 'success' :
-                        order.status === 'PENDING' ? 'warning' :
-                        'default'
-                      }
-                    />
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <Chip
+                        label={order.status}
+                        color={
+                          order.status === 'COMPLETED' ? 'success' :
+                          order.status === 'PENDING' ? 'warning' :
+                          order.status === 'CANCELLED' ? 'error' :
+                          'default'
+                        }
+                      />
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => router.push(`/orders/${order.id}`)}
+                      >
+                        View Details
+                      </Button>
+                    </Box>
                   </Box>
                   <Typography color="text.secondary" gutterBottom>
                     Placed on {format(new Date(order.createdAt), 'PPP')}
@@ -143,6 +217,18 @@ export default function OrdersPage() {
             </Grid>
           ))}
         </Grid>
+
+        {/* Pagination */}
+        {pagination.pages > 1 && (
+          <Box display="flex" justifyContent="center" mt={4}>
+            <Pagination
+              count={pagination.pages}
+              page={pagination.page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Box>
+        )}
       </Box>
     </Container>
   );

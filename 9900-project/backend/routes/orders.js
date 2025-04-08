@@ -306,4 +306,250 @@ router.get('/statuses', async (req, res) => {
   }
 });
 
+/**
+ * 🔹 Cancel an order (POST /api/orders/:id/cancel)
+ * Only customers can cancel their own orders
+ */
+router.post('/:id/cancel', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Retrieve order
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Check permissions
+    if (req.user.role !== 'CUSTOMER' || order.customerId !== req.user.id) {
+      return res.status(403).json({ message: 'Permission denied to cancel this order' });
+    }
+
+    // Check if order can be cancelled
+    if (order.status !== 'PENDING') {
+      return res.status(400).json({ message: 'Only pending orders can be cancelled' });
+    }
+
+    // Execute transaction to ensure all operations succeed
+    const updatedOrder = await prisma.$transaction(async (prisma) => {
+      // Update order status
+      const cancelledOrder = await prisma.order.update({
+        where: { id },
+        data: {
+          status: 'CANCELLED',
+          cancelledAt: new Date()
+        },
+        include: {
+          items: {
+            include: {
+              product: true
+            }
+          }
+        }
+      });
+
+      // Restore product stock
+      for (const item of order.items) {
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: {
+            quantity: {
+              increment: item.quantity
+            }
+          }
+        });
+      }
+
+      return cancelledOrder;
+    });
+
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error("❌ Error cancelling order:", error);
+    res.status(500).json({ message: 'Failed to cancel order' });
+  }
+});
+
+/**
+ * 🔹 Update order status (PUT /api/orders/:id/status)
+ * Only farmers and admins can update order status
+ */
+router.put('/:id/status', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Check user role
+    if (req.user.role !== 'FARMER' && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only farmers and admins can update order status' });
+    }
+
+    // Retrieve order
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                store: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Check if user has permission to update this order
+    if (req.user.role === 'FARMER') {
+      const isOrderFromStore = order.items.some(
+        item => item.product.store.ownerId === req.user.id
+      );
+      if (!isOrderFromStore) {
+        return res.status(403).json({ message: 'Permission denied to update this order' });
+      }
+    }
+
+    // Validate status transition
+    const validTransitions = {
+      'PENDING': ['PREPARED', 'CANCELLED'],
+      'PREPARED': ['DELIVERED', 'CANCELLED'],
+      'DELIVERED': ['COMPLETED'],
+      'COMPLETED': [],
+      'CANCELLED': []
+    };
+
+    if (!validTransitions[order.status]?.includes(status)) {
+      return res.status(400).json({ 
+        message: `Invalid status transition from ${order.status} to ${status}` 
+      });
+    }
+
+    // Update order status
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: {
+        status,
+        ...(status === 'COMPLETED' && { completedAt: new Date() })
+      },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
+
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error("❌ Error updating order status:", error);
+    res.status(500).json({ message: 'Failed to update order status' });
+  }
+});
+
+/**
+ * 🔹 Add order review (POST /api/orders/:id/review)
+ * Only customers can review their own completed orders
+ */
+router.post('/:id/review', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+    
+    // Check user role
+    if (req.user.role !== 'CUSTOMER') {
+      return res.status(403).json({ message: 'Only customers can review orders' });
+    }
+
+    // Validate rating
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    }
+
+    // Retrieve order
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                store: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Check permissions and order status
+    if (order.customerId !== req.user.id) {
+      return res.status(403).json({ message: 'Permission denied to review this order' });
+    }
+
+    if (order.status !== 'COMPLETED') {
+      return res.status(400).json({ message: 'Only completed orders can be reviewed' });
+    }
+
+    // Check if order already has a review
+    const existingReview = await prisma.review.findUnique({
+      where: { orderId: id }
+    });
+
+    if (existingReview) {
+      return res.status(400).json({ message: 'Order already has a review' });
+    }
+
+    // Create review
+    const review = await prisma.review.create({
+      data: {
+        orderId: id,
+        customerId: req.user.id,
+        storeId: order.items[0].product.storeId, // Assuming all items are from the same store
+        rating,
+        comment,
+        createdAt: new Date()
+      }
+    });
+
+    // Update store average rating
+    const storeReviews = await prisma.review.findMany({
+      where: { storeId: order.items[0].product.storeId }
+    });
+
+    const averageRating = storeReviews.reduce((acc, review) => acc + review.rating, 0) / storeReviews.length;
+
+    await prisma.store.update({
+      where: { id: order.items[0].product.storeId },
+      data: {
+        rating: averageRating
+      }
+    });
+
+    res.status(201).json(review);
+  } catch (error) {
+    console.error("❌ Error creating review:", error);
+    res.status(500).json({ message: 'Failed to create review' });
+  }
+});
+
 module.exports = router;
