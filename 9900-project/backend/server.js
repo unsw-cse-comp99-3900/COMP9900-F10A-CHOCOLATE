@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 // Import routes
 const userRoutes = require('./routes/users');
@@ -14,6 +15,9 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// 静态文件服务
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API route registration
 app.use('/api/users', userRoutes);

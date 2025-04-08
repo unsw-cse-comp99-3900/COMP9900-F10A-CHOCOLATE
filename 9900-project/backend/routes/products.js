@@ -1,9 +1,35 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
 
 const prisma = new PrismaClient();
 const router = express.Router();
+
+// 配置multer
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/products/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 限制5MB
+  },
+  fileFilter: function (req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+      return cb(new Error('只允许上传图片文件！'), false);
+    }
+    cb(null, true);
+  }
+});
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
@@ -160,6 +186,25 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * 🔹 上传产品图片 (POST /api/products/upload-image)
+ * 需要商店所有者权限
+ */
+router.post('/upload-image', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: '请选择要上传的图片' });
+    }
+
+    // 返回图片URL
+    const imageUrl = `/uploads/products/${req.file.filename}`;
+    res.json({ imageUrl });
+  } catch (error) {
+    console.error("❌ Error uploading product image:", error);
+    res.status(500).json({ message: '上传产品图片失败' });
+  }
+});
+
+/**
  * 🔹 Create a product (POST /api/products)
  * Requires store owner permission
  */
@@ -196,7 +241,7 @@ router.post('/', authenticateToken, async (req, res) => {
         description,
         price: parseFloat(price),
         quantity: quantity ? parseInt(quantity) : 0,
-        imageUrl,
+        imageUrl: imageUrl || null,
         category,
         storeId
       }
