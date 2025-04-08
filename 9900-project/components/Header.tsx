@@ -446,7 +446,7 @@ const Header = () => {
             {/* {(user?.role !== "FARMER") && ( */}
               <div className="relative group">
                 <button className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2 flex items-center">
-                  {user?.role === "CUSTOMER" ? "SHOP" : "BROWSE"}
+                  {isLoggedIn && user?.role === "FARMER"  ? "BROWSE" : "SHOP"}
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
                 <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-auto min-w-[800px] z-50">
