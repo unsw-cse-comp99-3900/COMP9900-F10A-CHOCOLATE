@@ -235,7 +235,7 @@ router.post('/login', async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, phone, address, currentPassword, newPassword } = req.body;
+    const { name, email, phone, address, currentPassword, newPassword } = req.body;
     
     // Verify permissions
     if (req.user.id !== id && req.user.role !== 'ADMIN') {
@@ -251,10 +251,51 @@ router.put('/:id', authenticateToken, async (req, res) => {
     // Prepare update data
     const updateData = {};
     
-    // Update basic info if provided
-    if (name !== undefined) updateData.name = name;
-    if (phone !== undefined) updateData.phone = phone;
-    if (address !== undefined) updateData.address = address;
+    // Validate and update basic info
+    if (name !== undefined) {
+      if (name.length < 2 || name.length > 50) {
+        return res.status(400).json({ message: 'Name must be between 2 and 50 characters' });
+      }
+      updateData.name = name;
+    }
+
+    if (email !== undefined) {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Invalid email format' });
+      }
+
+      // Check if email is already taken
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          email,
+          NOT: {
+            id: id
+          }
+        }
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email is already taken' });
+      }
+      updateData.email = email;
+    }
+
+    if (phone !== undefined) {
+      // Validate phone format (basic validation)
+      const phoneRegex = /^\+?[\d\s-]{10,}$/;
+      if (!phoneRegex.test(phone)) {
+        return res.status(400).json({ message: 'Invalid phone number format' });
+      }
+      updateData.phone = phone;
+    }
+
+    if (address !== undefined) {
+      if (address.length < 5 || address.length > 200) {
+        return res.status(400).json({ message: 'Address must be between 5 and 200 characters' });
+      }
+      updateData.address = address;
+    }
 
     // Handle password change if requested
     if (newPassword) {
@@ -268,9 +309,20 @@ router.put('/:id', authenticateToken, async (req, res) => {
         return res.status(400).json({ message: 'Current password is incorrect' });
       }
 
+      // Validate new password
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+      }
+      if (newPassword === currentPassword) {
+        return res.status(400).json({ message: 'New password must be different from current password' });
+      }
+
       // Hash new password
       updateData.password = await bcrypt.hash(newPassword, 10);
     }
+
+    // Add updatedAt timestamp
+    updateData.updatedAt = new Date();
 
     // Update user
     const updatedUser = await prisma.user.update({
