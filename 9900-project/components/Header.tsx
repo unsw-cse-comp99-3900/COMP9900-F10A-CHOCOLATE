@@ -348,52 +348,56 @@ const Header = () => {
               </li>
             )}
             <li className="py-2 px-4 border-b border-gray-700">
-              <Link href="/" className="font-semibold hover:text-gray-300 transition-colors block">
+              {/* navigate to home page if it's customer, navigate to landing_famer_store if it's Farmer */}
+              <Link href={user?.role === "CUSTOMER" ? "/" : "/landing_famer_store"} className="font-semibold hover:text-gray-300 transition-colors block">
                 HOME
               </Link>
             </li>
             
-            <li className="border-b border-gray-700">
-              <div className="py-2 px-4">
-                <button 
-                  onClick={toggleMobileShop}
-                  className="font-semibold hover:text-gray-300 transition-colors flex items-center w-full justify-between"
-                >
-                  <span>SHOP</span>
-                  {mobileShopOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-                </button>
-              </div>
-              {mobileShopOpen && (
-                <div className="bg-gray-800 py-1">
-                  {categoryData.map((category, index) => (
-                    <div key={index}>
-                      <Link 
-                        href={`/product-page/${category.name.toLowerCase()}`} 
-                        className="block py-2 px-8 hover:bg-gray-700 font-medium border-b border-gray-700 text-white"
-                      >
-                        {category.name === 'Wheat' && <Wheat size={20} />}
-                        {category.name === 'SugarCane' && <CandyCane size={20} />}
-                        {category.name === 'Lentils' && <Vegan size={20} />}
-                        {category.name === 'Fruit' && <Apple size={20} />}
-                        {category.name === 'Veggie' && <LeafyGreen size={20} />}
-                        {category.name}
-                      </Link>
-                      <div className="ml-4 pl-6 border-l border-gray-700 space-y-1 py-1">
-                        {category.subcategories.map((subcategory, subIndex) => (
+            {/* Only show SHOP when it's not a Farmer */}
+            {(!isLoggedIn || user?.role !== "FARMER") && (
+                <li className="border-b border-gray-700">
+                  <div className="py-2 px-4">
+                    <button 
+                      onClick={toggleMobileShop}
+                      className="font-semibold hover:text-gray-300 transition-colors flex items-center w-full justify-between"
+                    >
+                      <span>SHOP</span>
+                      {mobileShopOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  {mobileShopOpen && (
+                    <div className="bg-gray-800 py-1">
+                      {categoryData.map((category, index) => (
+                        <div key={index}>
                           <Link 
-                            key={subIndex} 
-                            href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase()}`}
-                            className="block py-1 px-4 text-gray-400 hover:text-white text-sm"
+                            href={`/product-page/${category.name.toLowerCase()}`} 
+                            className="block py-2 px-8 hover:bg-gray-700 font-medium border-b border-gray-700 text-white"
                           >
-                            {subcategory}
+                            {category.name === 'Wheat' && <Wheat size={20} />}
+                            {category.name === 'SugarCane' && <CandyCane size={20} />}
+                            {category.name === 'Lentils' && <Vegan size={20} />}
+                            {category.name === 'Fruit' && <Apple size={20} />}
+                            {category.name === 'Veggie' && <LeafyGreen size={20} />}
+                            {category.name}
                           </Link>
-                        ))}
-                      </div>
+                          <div className="ml-4 pl-6 border-l border-gray-700 space-y-1 py-1">
+                            {category.subcategories.map((subcategory, subIndex) => (
+                              <Link 
+                                key={subIndex} 
+                                href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase()}`}
+                                className="block py-1 px-4 text-gray-400 hover:text-white text-sm"
+                              >
+                                {subcategory}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </li>
+                  )}
+                </li>
+            )}
             
             <li className="border-b border-gray-700">
               <div className="py-2 px-4">
@@ -428,49 +432,52 @@ const Header = () => {
         {/* Desktop menu */}
         <div className="hidden md:flex justify-center py-3 bg-black">
           <div className="flex space-x-16">
-            <Link href="/" className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2">
-              HOME
-            </Link>
+              <Link href={user?.role === "CUSTOMER" ? "/" : "/landing_famer_store"} className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2">
+                HOME
+              </Link>
             
-            <div className="relative group">
-              <button className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2 flex items-center">
-                SHOP
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </button>
-              <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-auto min-w-[800px] z-50">
-                <div className="grid grid-cols-5 gap-8 p-8">
-                  {categoryData.map((category, index) => (
-                    <div key={index} className="col-span-1">
-                      <Link 
-                        href={`/product-page/${category.name.toLowerCase()}`}
-                        className="flex items-center px-4 py-3 rounded font-semibold text-gray-800 hover:text-green-600 transition-colors text-lg border-b border-gray-200 mb-3"
-                      >
-                        <span className="mr-2 text-green-600">
-                          {category.name === 'Wheat' && <Wheat size={22} />}
-                          {category.name === 'SugarCane' && <CandyCane size={22} />}
-                          {category.name === 'Lentils' && <LeafyGreen size={22} />}
-                          {category.name === 'Fruit' && <Apple size={22} />}
-                          {category.name === 'Veggie' && <Vegan size={22} />}
-                        </span>
-                        {category.name}
-                      </Link>
-                      <ul className="space-y-2 mt-3">
-                        {category.subcategories.map((subcategory, subIndex) => (
-                          <li key={subIndex}>
-                            <Link 
-                              href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase().replace(/\s+/g, '-')}`}
-                              className="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded"
-                            >
-                              {subcategory}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+            {/* Only show SHOP in desktop menu when it's not a Farmer */}
+            {/* {(user?.role !== "FARMER") && ( */}
+              <div className="relative group">
+                <button className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2 flex items-center">
+                  {user?.role === "CUSTOMER" ? "SHOP" : "BROWSE"}
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </button>
+                <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-auto min-w-[800px] z-50">
+                  <div className="grid grid-cols-5 gap-8 p-8">
+                    {categoryData.map((category, index) => (
+                      <div key={index} className="col-span-1">
+                        <Link 
+                          href={`/product-page/${category.name.toLowerCase()}`}
+                          className="flex items-center px-4 py-3 rounded font-semibold text-gray-800 hover:text-green-600 transition-colors text-lg border-b border-gray-200 mb-3"
+                        >
+                          <span className="mr-2 text-green-600">
+                            {category.name === 'Wheat' && <Wheat size={22} />}
+                            {category.name === 'SugarCane' && <CandyCane size={22} />}
+                            {category.name === 'Lentils' && <LeafyGreen size={22} />}
+                            {category.name === 'Fruit' && <Apple size={22} />}
+                            {category.name === 'Veggie' && <Vegan size={22} />}
+                          </span>
+                          {category.name}
+                        </Link>
+                        <ul className="space-y-2 mt-3">
+                          {category.subcategories.map((subcategory, subIndex) => (
+                            <li key={subIndex}>
+                              <Link 
+                                href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase().replace(/\s+/g, '-')}`}
+                                className="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded"
+                              >
+                                {subcategory}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            
             
             <div className="relative group">
               <button className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2 flex items-center">
