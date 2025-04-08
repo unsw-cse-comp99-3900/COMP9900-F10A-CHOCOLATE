@@ -229,26 +229,47 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * 🔹 Update user information (PUT /api/users/:id)
- * Users can update their own information, admins can update any user's information
+ * 🔹 Update user profile (PUT /api/users/:id)
+ * Users can update their own profile, admins can update any profile
  */
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, phone, address, password } = req.body;
+    const { name, phone, address, currentPassword, newPassword } = req.body;
     
     // Verify permissions
     if (req.user.id !== id && req.user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Permission denied' });
     }
 
+    // Get current user data
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     // Prepare update data
     const updateData = {};
-    if (name) updateData.name = name;
-    if (phone) updateData.phone = phone;
-    if (address) updateData.address = address;
-    if (password) {
-      updateData.password = await bcrypt.hash(password, 10);
+    
+    // Update basic info if provided
+    if (name !== undefined) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) updateData.address = address;
+
+    // Handle password change if requested
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Current password is required to change password' });
+      }
+
+      // Verify current password
+      const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+
+      // Hash new password
+      updateData.password = await bcrypt.hash(newPassword, 10);
     }
 
     // Update user
@@ -267,10 +288,13 @@ router.put('/:id', authenticateToken, async (req, res) => {
       }
     });
 
-    res.json(updatedUser);
+    res.json({
+      user: updatedUser,
+      message: 'Profile updated successfully'
+    });
   } catch (error) {
-    console.error("❌ Update User Error:", error);
-    res.status(500).json({ message: 'Failed to update user information' });
+    console.error("❌ Error updating user:", error);
+    res.status(500).json({ message: 'Failed to update user profile' });
   }
 });
 
