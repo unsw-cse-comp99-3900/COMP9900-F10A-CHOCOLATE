@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, ShoppingCart, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
 import Cart from "@/components/cart";
 
@@ -13,8 +14,8 @@ export default function ProductDetailPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const router = useRouter();
+  const { user } = useAuth();
   const { addToCart } = useCart();
-
   const [product, setProduct] = useState<any>(null);
   const [similarProducts, setSimilarProducts] = useState<any[]>([]);
   const [quantity, setQuantity] = useState(1);
@@ -152,7 +153,9 @@ export default function ProductDetailPage() {
             </p>
             <p className="text-xl text-gray-600">{product.description || "No description available."}</p>
             <p className="text-3xl font-bold text-green-600">${product.price?.toFixed(2)}</p>
-
+            
+            {/* only show add to cart button when it's not a Farmer */}
+            {(user?.role !== "FARMER") && ( 
             <div className="flex items-center gap-3">
               <Button variant="outline" size="icon" onClick={decrease}>
                 <Minus className="w-4 h-4" />
@@ -173,6 +176,7 @@ export default function ProductDetailPage() {
                 <ShoppingCart size={16} /> ADD TO CART
               </Button>
             </div>
+            )}
           </div>
         </div>
 
