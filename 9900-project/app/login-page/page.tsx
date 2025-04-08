@@ -73,7 +73,7 @@ export default function LoginPage() {
       };
       
       // Send login request to API
-      const response = await fetch("http://localhost:5001/api/users/login", {
+      const response = await fetch("http://localhost:5003/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
