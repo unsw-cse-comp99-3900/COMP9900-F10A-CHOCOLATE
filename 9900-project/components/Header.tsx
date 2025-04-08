@@ -96,7 +96,7 @@ const Header = () => {
       <div className="w-full bg-gray-100 py-4 px-4 md:px-12 flex flex-col md:flex-row items-center justify-between">
         {/* Mobile view - centered logo container */}
         <div className="w-full flex justify-center md:hidden mb-4">
-          <Link href="/" className="w-32 h-16 relative">
+          <Link href={isLoggedIn && user?.role === "FARMER" ? "/landing_famer_store" : "/"} className="w-32 h-16 relative">
             <Image 
               src="/farmerplace-logo.png" 
               alt="Fresh Harvest Logo" 
@@ -348,8 +348,11 @@ const Header = () => {
               </li>
             )}
             <li className="py-2 px-4 border-b border-gray-700">
-              {/* navigate to home page if it's customer, navigate to landing_famer_store if it's Farmer */}
-              <Link href={user?.role === "CUSTOMER" ? "/" : "/landing_famer_store"} className="font-semibold hover:text-gray-300 transition-colors block">
+              {/* Direct to home page by default; only direct to farmer landing page if logged in as a farmer */}
+              <Link 
+                href={isLoggedIn && user?.role === "FARMER" ? "/landing_famer_store" : "/"} 
+                className="font-semibold hover:text-gray-300 transition-colors block"
+              >
                 HOME
               </Link>
             </li>
@@ -432,9 +435,12 @@ const Header = () => {
         {/* Desktop menu */}
         <div className="hidden md:flex justify-center py-3 bg-black">
           <div className="flex space-x-16">
-              <Link href={user?.role === "CUSTOMER" ? "/" : "/landing_famer_store"} className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2">
-                HOME
-              </Link>
+            <Link 
+              href={isLoggedIn && user?.role === "FARMER" ? "/landing_famer_store" : "/"} 
+              className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2"
+            >
+              HOME
+            </Link>
             
             {/* Only show SHOP in desktop menu when it's not a Farmer */}
             {/* {(user?.role !== "FARMER") && ( */}

@@ -89,7 +89,6 @@ export default function EditProduct() {
         setIsLoading(false);
       }
     }
-
     fetchProductData();
   }, [productId, form]);
 
