@@ -3,9 +3,16 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ## Getting Started
 
 First, run the development server:
-
 ```bash
-npm run dev
+cd ./9900-project
+rmdir /s /q node_modules # (delete the existing package)
+del package-lock.json # (delete the existing package)
+nvm install 18.18.0
+nvm use 18.18.0
+npm cache clean --force
+npm install
+npm audit fix --force # (if necessary)
+npm run dev # (recommend)
 # or
 yarn dev
 # or
@@ -14,7 +21,8 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+Open [http://localhost:3000](http://localhost:3000) OR [http://192.168.50.22:3000](http://192.168.50.22:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
