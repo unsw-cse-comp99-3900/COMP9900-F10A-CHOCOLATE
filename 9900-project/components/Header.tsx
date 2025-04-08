@@ -110,7 +110,7 @@ const Header = () => {
         {/* Desktop view - logo and search in a row */}
         <div className="hidden md:flex items-center md:w-auto md:flex-1">
           {/* Desktop logo */}
-          <Link href="/" className="w-32 h-16 relative mr-4 flex-shrink-0">
+          <Link href={isLoggedIn && user?.role === "FARMER" ? "/landing_famer_store" : "/"} className="w-32 h-16 relative mr-4 flex-shrink-0">
             <Image 
               src="/farmerplace-logo.png" 
               alt="Fresh Harvest Logo" 
@@ -252,8 +252,8 @@ const Header = () => {
                         My Store
                       </Link>
                     )}
-                    <Link href="/account/orders" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
-                      My Orders
+                    <Link href={isLoggedIn && user?.role === "FARMER" ? "/farmer-orders" : "/customer-orders"} className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
+                      My Orders    
                     </Link>
                     <button 
                       onClick={handleLogout}

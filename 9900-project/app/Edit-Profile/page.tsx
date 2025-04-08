@@ -207,15 +207,24 @@ export default function EditProfile() {
 
       const updatedUser = await response.json();
       
-      // Update user in localStorage to reflect changes
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      // Update user in storage to reflect changes
+      if (localStorage.getItem('token')) {
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      } else if (sessionStorage.getItem('token')) {
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+      }
       
       // Show success message
       setSuccess("Profile updated successfully!");
       
-      // Reload the page after a short delay to reflect the updated user info
+      // Instead of reloading which might lose auth state,
+      // redirect to a specific page after a short delay
       setTimeout(() => {
-        window.location.reload();
+        if (user.role === "FARMER") {
+          router.push("/landing_famer_store");
+        } else {
+          router.push("/");
+        }
       }, 1500);
       
       // Reset password fields
@@ -276,6 +285,11 @@ export default function EditProfile() {
       const updatedStore = await response.json();
       setStore(updatedStore);
       setSuccess("Store details updated successfully!");
+      
+      // Redirect to the farmer landing page after a short delay instead of reloading
+      setTimeout(() => {
+        router.push("/landing_famer_store");
+      }, 1500);
     } catch (error) {
       console.error("Error updating store:", error);
       setError(error instanceof Error ? error.message : "Failed to update store details");
