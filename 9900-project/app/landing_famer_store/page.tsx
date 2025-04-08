@@ -16,7 +16,6 @@ export default function FarmerOwnStorePage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOption, setSortOption] = useState("default");
-  const [useNextImage, setUseNextImage] = useState(true);
   const productsPerPage = 9;
 
   useEffect(() => {
@@ -108,11 +107,6 @@ export default function FarmerOwnStorePage() {
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + productsPerPage);
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  // Handle image error by switching to standard img tag
-  const handleImageError = () => {
-    setUseNextImage(false);
-  };
-
   if (loading) return <div className="text-center py-10">Loading...</div>;
   if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
 
@@ -120,26 +114,15 @@ export default function FarmerOwnStorePage() {
     <div className="min-h-screen bg-gray-100">
       {/* 店铺信息 */}
       <section className="relative h-[400px] w-full flex items-center justify-center">
-        {/* Banner image with fallback */}
+        {/* 使用 next/image 组件来显示图片 */}
         <div className="absolute inset-0">
-          {useNextImage ? (
-            <Image
-              src={store?.image || "/default-store-bg.jpg"}
-              alt={store?.name || "Store Image"}
-              layout="fill"
-              objectFit="cover"
-              className="z-0"
-              onError={handleImageError}
-              // NEW ADDED
-              unoptimized={store?.image?.includes('http')} // Skip optimization for external URLs
-            />
-          ) : (
-            <img
-              src={store?.image || "/default-store-bg.jpg"}
-              alt={store?.name || "Store Image"}
-              className="w-full h-full object-cover z-0"
-            />
-          )}
+          <Image
+            src={store?.image || "/default-store-bg.jpg"}  // 使用 store.image 或者默认图片
+            alt={store?.name || "Store Image"}
+            layout="fill"  // 使图片覆盖整个容器
+            objectFit="cover"  // 保持图片的比例并裁剪填满容器
+            className="z-0"
+          />
         </div>
         
         <div className="absolute inset-0 bg-black/40" /> {/* 模糊遮罩层 */}
@@ -148,10 +131,10 @@ export default function FarmerOwnStorePage() {
           <h1 className="text-5xl font-extrabold drop-shadow-md">{store.name}</h1>
           <p className="mt-4 text-xl font-medium drop-shadow-sm">{store.description}</p>
           <button
-            onClick={() => router.push("/account/store")}
+            onClick={() => router.push("/account/profile")}
             className="mt-6 px-6 py-3 bg-white text-black font-semibold rounded-md shadow hover:bg-gray-200 transition"
           >
-            Edit Store
+            Change Profile
           </button>
         </div>
       </section>
@@ -169,7 +152,7 @@ export default function FarmerOwnStorePage() {
                 {/* Upload a new product section */}
                 <div className="flex items-center space-x-4">
                     <button
-                    onClick={() => router.push("/upload-product")}
+                    onClick={() => router.push("/product-upload-page")}
                     className="bg-transparent border-none p-0 hover:bg-transparent focus:outline-none"
                     >
                     <CirclePlus size={24} className="cursor-pointer" />
@@ -199,8 +182,8 @@ export default function FarmerOwnStorePage() {
               <div
                 key={product.id}
                 className="p-4 border rounded-lg shadow hover:shadow-lg cursor-pointer"
-                onClick={() => router.push(`/productDetail-page?id=${product.id}`)}
-              >
+                onClick={() => router.push(`/Edit-Product?id=${product.id}`)}
+              >   
                 <img
                   src={product.imageUrl}
                   alt={product.name}
