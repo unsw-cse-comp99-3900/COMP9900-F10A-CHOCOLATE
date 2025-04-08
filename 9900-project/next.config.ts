@@ -1,9 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
-    domains: ["source.unsplash.com", "localhost"], // 允许 Unsplash 和本地图片
+    domains: [
+      "source.unsplash.com", 
+      "as1.ftcdn.net",
+      "ftcdn.net",
+      "images.unsplash.com",
+      "plus.unsplash.com",
+      "localhost"
+    ],
     remotePatterns: [
       {
         protocol: 'http',
@@ -16,9 +22,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
-module.exports = {
-  images: {
-    domains: ["source.unsplash.com"], // 允许 Unsplash 图片
-  },
-};

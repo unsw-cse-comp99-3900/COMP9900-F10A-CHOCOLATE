@@ -27,6 +27,7 @@ import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { handleRedirectAfterAuth } from '@/lib/navigation';//跳转到farmer or customer
 
 // Define form schema
 const formSchema = z.object({
@@ -101,12 +102,15 @@ export default function LoginPage() {
         }
         
         // Redirect to home page after successful login
+        // setTimeout(() => {
+        //   router.push('/');
+        // }, 1500);
         setTimeout(() => {
-          router.push('/');
-        }, 1500);
+          handleRedirectAfterAuth(data.user, router);
+        }, 1500);        
       } else {
         console.error("Login failed:", data.message);
-        setInvalidCredentials(true);
+          setInvalidCredentials(true);
       
       }
     } catch (error) {

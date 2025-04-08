@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 const { PrismaClient, UserRole, OrderStatus, ProductCategory } = require("@prisma/client");
 const prisma = new PrismaClient();
+const bcrypt = require('bcrypt');
+require('dotenv').config();
 
 async function main() {
   console.log("🌱 Seeding database...");
+
+  // ✅ Hash the password once for all users
+  const hashedPassword = await bcrypt.hash("password123", 10);
 
   // 1️⃣ 创建 5 个农民 (FARMER)
   const farmers = await prisma.$transaction(
@@ -10,11 +16,11 @@ async function main() {
       prisma.user.create({
         data: {
           email: `farmer${i + 1}@example.com`,
-          password: "password123",
+          password: hashedPassword,
           name: `Farmer ${i + 1}`,
           phone: `13900138${i}`,
           address: `Farm ${i + 1} Road, Countryside`,
-          role: UserRole.FARMER, // ✅ 使用 Prisma Enum
+          role: UserRole.FARMER,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -31,7 +37,7 @@ async function main() {
           description: `High-quality fresh products from Fresh Market ${i + 1}`,
           imageUrl: `/farmer${i + 1}.jpg`,
           rating: parseFloat((Math.random() * 5).toFixed(1)),
-          ownerId: farmer.id, // 关联农民
+          ownerId: farmer.id,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -39,24 +45,61 @@ async function main() {
     )
   );
 
-  // 3️⃣ 创建 10 个产品 (Product)
+  // 3️⃣ 创建产品 (Product)
   const products = await prisma.$transaction(
     stores.flatMap((store, i) =>
-      Array.from({ length: 2 }).map((_, j) =>
-        prisma.product.create({
+      Array.from({ length: 5 }).map((_, j) => {
+        const categoryIndex = (i * 5 + j) % 5;
+        const categories = [
+          ProductCategory.WHEAT,
+          ProductCategory.SUGAR_CANE,
+          ProductCategory.LENTILS,
+          ProductCategory.FRUIT,
+          ProductCategory.VEGGIE,
+        ];
+        const category = categories[categoryIndex];
+
+        let productName, productDescription;
+        switch (category) {
+          case ProductCategory.WHEAT:
+            productName = `Organic Wheat ${i * 5 + j + 1}`;
+            productDescription = `High quality organic wheat from Farm ${i + 1}`;
+            break;
+          case ProductCategory.SUGAR_CANE:
+            productName = `Sweet Sugar Cane ${i * 5 + j + 1}`;
+            productDescription = `Fresh sweet sugar cane from Farm ${i + 1}`;
+            break;
+          case ProductCategory.LENTILS:
+            productName = `Premium Lentils ${i * 5 + j + 1}`;
+            productDescription = `Nutrient-rich lentils from Farm ${i + 1}`;
+            break;
+          case ProductCategory.FRUIT:
+            productName = `Fresh Fruit ${i * 5 + j + 1}`;
+            productDescription = `Juicy seasonal fruits from Farm ${i + 1}`;
+            break;
+          case ProductCategory.VEGGIE:
+            productName = `Organic Vegetables ${i * 5 + j + 1}`;
+            productDescription = `Locally grown vegetables from Farm ${i + 1}`;
+            break;
+          default:
+            productName = `Product ${i * 5 + j + 1}`;
+            productDescription = `High quality product from Farm ${i + 1}`;
+        }
+
+        return prisma.product.create({
           data: {
-            name: `Product ${i * 2 + j + 1}`,
-            description: `High quality Product ${i * 2 + j + 1}`,
+            name: productName,
+            description: productDescription,
             price: parseFloat((Math.random() * 100).toFixed(2)),
             quantity: Math.floor(Math.random() * 50) + 1,
-            imageUrl: `/product${i * 2 + j + 1}.jpg`,
-            category: j % 2 === 0 ? ProductCategory.VEGGIE : ProductCategory.FRUIT, // ✅ 使用 Enum
-            storeId: store.id, // 关联店铺
+            imageUrl: `/product${i * 5 + j + 1}.jpg`,
+            category,
+            storeId: store.id,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
-        })
-      )
+        });
+      })
     )
   );
 
@@ -66,11 +109,11 @@ async function main() {
       prisma.user.create({
         data: {
           email: `customer${i + 1}@example.com`,
-          password: "password123",
+          password: hashedPassword,
           name: `Customer ${i + 1}`,
           phone: `13800138${i}`,
           address: `City Center ${i + 1}`,
-          role: UserRole.CUSTOMER, // ✅ 使用 Prisma Enum
+          role: UserRole.CUSTOMER,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -84,8 +127,8 @@ async function main() {
       prisma.order.create({
         data: {
           totalAmount: parseFloat((Math.random() * 500).toFixed(2)),
-          status: Object.values(OrderStatus)[i % Object.keys(OrderStatus).length], // ✅ 选择合法 Enum 值
-          customerId: customer.id, // 关联顾客
+          status: Object.values(OrderStatus)[i % Object.keys(OrderStatus).length],
+          customerId: customer.id,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -93,32 +136,35 @@ async function main() {
     )
   );
 
-  // 6️⃣ 每个订单包含 2 个订单项 (OrderItem)
+  // 6️⃣ 每个订单包含 3 个订单项 (OrderItem)
   await prisma.$transaction(
     orders.flatMap((order, i) =>
-      Array.from({ length: 2 }).map(() =>
-        prisma.orderItem.create({
+      Array.from({ length: 3 }).map((_, j) => {
+        const productIndex = (i + j * 5) % products.length;
+        const selectedProduct = products[productIndex];
+
+        return prisma.orderItem.create({
           data: {
-            orderId: order.id, // 关联订单
-            productId: products[i % products.length].id, // 关联产品
+            orderId: order.id,
+            productId: selectedProduct.id,
             quantity: Math.floor(Math.random() * 5) + 1,
-            price: products[i % products.length].price, // Float
-            createdAt: new Date(), // ✅ 删除 `updatedAt`
+            price: selectedProduct.price,
+            createdAt: new Date(),
           },
-        })
-      )
+        });
+      })
     )
   );
 
-  // 7️⃣ 为部分店铺添加评价 (Review)
+  // 7️⃣ 创建评价 (Review)
   await prisma.$transaction(
     customers.map((customer, i) =>
       prisma.review.create({
         data: {
-          rating: Math.floor(Math.random() * 5) + 1, // Int
+          rating: Math.floor(Math.random() * 5) + 1,
           comment: `Great service and products from Fresh Market ${i + 1}`,
-          userId: customer.id, // 评价者是顾客
-          storeId: stores[i % stores.length].id, // 评价的店铺
+          userId: customer.id,
+          storeId: stores[i % stores.length].id,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -136,4 +182,37 @@ main()
   })
   .finally(() => {
     prisma.$disconnect();
+=======
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function main() {
+  const store = await prisma.store.findFirst(); // 选择一个已有的店铺（或者手动指定 storeId）
+
+  if (!store) {
+    console.log("❌ No store found. Please create a store first.");
+    return;
+  }
+
+  const products = [
+    { name: "Fruit", category: "FRUIT", price: 10.0, quantity: 100, storeId: store.id },
+    { name: "Veggie", category: "VEGGIE", price: 8.0, quantity: 120, storeId: store.id },
+    { name: "Wheat", category: "WHEAT", price: 15.0, quantity: 80, storeId: store.id },
+    { name: "Sugar Cane", category: "SUGAR_CANE", price: 12.0, quantity: 90, storeId: store.id },
+    { name: "Lentils", category: "LENTILS", price: 14.0, quantity: 110, storeId: store.id }
+  ];
+
+  for (const product of products) {
+    await prisma.product.create({ data: product });
+    console.log(`✅ Product "${product.name}" added to the database.`);
+  }
+}
+
+main()
+  .catch((e) => {
+    console.error("❌ Error seeding database:", e);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+>>>>>>> origin/boxing
   });
