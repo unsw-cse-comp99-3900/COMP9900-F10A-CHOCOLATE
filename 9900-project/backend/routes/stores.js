@@ -1,6 +1,8 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+// const upload = require('./upload');
+const upload = require('./middleware/upload');
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -121,41 +123,38 @@ router.get('/:id', async (req, res) => {
  * 🔹 Create a store (POST /api/stores)
  * Requires farmer role
  */
-router.post('/', authenticateToken, async (req, res) => {
-  try {
-    const { name, description, imageUrl } = req.body;
+router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
+  try{
     
-    // Check user role
-    if (req.user.role !== 'FARMER' && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: 'Permission denied, only farmers can create stores' });
+  const { name, description } = req.body;
+  const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+  if (req.user.role !== 'FARMER' && req.user.role !== 'ADMIN') {
+    return res.status(403).json({ message: 'Only farmers can create stores' });
+  }
+
+  if (!name) return res.status(400).json({ message: 'Store name is required' });
+
+  const existingStore = await prisma.store.findFirst({
+    where: { ownerId: req.user.id }
+  });
+
+  if (existingStore) {
+    return res.status(400).json({ message: 'You already own a store' });
+  }
+
+  const newStore = await prisma.store.create({
+    data: {
+      name,
+      description,
+      imageUrl,
+      ownerId: req.user.id
     }
+  });
 
-    // Check required fields
-    if (!name) {
-      return res.status(400).json({ message: 'Store name is required' });
-    }
-
-    // Check if user already owns a store
-    const existingStore = await prisma.store.findFirst({
-      where: { ownerId: req.user.id }
-    });
-
-    if (existingStore) {
-      return res.status(400).json({ message: 'You already own a store' });
-    }
-
-    // Create store
-    const newStore = await prisma.store.create({
-      data: {
-        name,
-        description,
-        imageUrl,
-        ownerId: req.user.id
-      }
-    });
-
-    res.status(201).json(newStore);
-  } catch (error) {
+  res.status(201).json(newStore);
+}
+    catch (error) {
     console.error("❌ Error creating store:", error);
     res.status(500).json({ message: 'Failed to create store' });
   }
@@ -165,35 +164,29 @@ router.post('/', authenticateToken, async (req, res) => {
  * 🔹 Update store details (PUT /api/stores/:id)
  * Only store owner or admin can update
  */
-router.put('/:id', authenticateToken, async (req, res) => {
-  try {
+  router.put('/:id', authenticateToken, upload.single('image'), async (req, res) => {
+    try{
     const { id } = req.params;
-    const { name, description, imageUrl } = req.body;
-    
-    // Retrieve store information
+    const { name, description } = req.body;
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+
     const store = await prisma.store.findUnique({ where: { id } });
-    
-    if (!store) {
-      return res.status(404).json({ message: 'Store not found' });
-    }
-    
-    // Check permissions
+    if (!store) return res.status(404).json({ message: 'Store not found' });
+
     if (store.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: 'Permission denied, only store owners can update store details' });
+      return res.status(403).json({ message: 'Only store owners can update stores' });
     }
-    
-    // Prepare update data
+
     const updateData = {};
     if (name) updateData.name = name;
     if (description !== undefined) updateData.description = description;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
-    
-    // Update store
+
     const updatedStore = await prisma.store.update({
       where: { id },
       data: updateData
     });
-    
+
     res.json(updatedStore);
   } catch (error) {
     console.error("❌ Error updating store:", error);

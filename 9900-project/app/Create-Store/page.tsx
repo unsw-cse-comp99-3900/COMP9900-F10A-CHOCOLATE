@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,11 +21,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Define the form schema with validation
 const formSchema = z.object({
   storeName: z.string().min(2, "Store name must be at least 2 characters").max(50, "Store name must be less than 50 characters"),
   storeDescription: z.string().min(10, "Description must be at least 10 characters").max(500, "Description must be less than 500 characters"),
-  storeImageUrl: z.string().optional(),
+  storeImage: z.any().optional(), // use file instead of URL
 });
 
 export default function CreateStore() {
@@ -33,66 +33,46 @@ export default function CreateStore() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("/default-store-bg.jpg");
-  const [imageError, setImageError] = useState(false);
 
-  // Define form with validation
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        storeName: "",
-        storeDescription: "",
-        storeImageUrl: "",
+      storeName: "",
+      storeDescription: "",
+      storeImage: undefined,
     },
   });
 
-  // Watch for changes in the image URL field
-  const imageUrl = form.watch("storeImageUrl");
-  
-  // Update image preview when URL changes
-  useEffect(() => {
-    if (imageUrl && imageUrl.trim() !== "") {
-      setImagePreview(imageUrl);
-      setImageError(false); // Reset error state when URL changes
-    } else {
-      setImagePreview("/default-store-bg.jpg");
-      setImageError(false);
-    }
-  }, [imageUrl]);
-
-  // Check if user is logged in and is a farmer
   useEffect(() => {
     if (!user) {
       setError("You must be logged in to create a store");
       return;
     }
-
     if (user.role !== "FARMER") {
       setError("Only farmers can create stores");
       return;
     }
   }, [user]);
 
-  // Handle image load error
-  const handleImageError = () => {
-    setImageError(true);
-    setImagePreview("/default-store-bg.jpg");
-  };
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Check if user is logged in and is a farmer
     if (!user || user.role !== "FARMER") {
       alert("You must be logged in as a farmer to create a store");
       router.push("/login-page");
       return;
     }
 
-    // Get token from storage
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    
     if (!token) {
       alert("Authentication token not found. Please log in again.");
       router.push("/login-page");
       return;
+    }
+
+    const formData = new FormData();
+    formData.append("name", values.storeName);
+    formData.append("description", values.storeDescription);
+    if (values.storeImage) {
+      formData.append("image", values.storeImage);
     }
 
     setIsSubmitting(true);
@@ -102,14 +82,9 @@ export default function CreateStore() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/stores`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: values.storeName,
-          description: values.storeDescription,
-          imageUrl: values.storeImageUrl || '/default-store-bg.jpg', 
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -118,15 +93,11 @@ export default function CreateStore() {
       }
 
       const data = await response.json();
-      
       alert("Store created successfully!");
-
-      // Redirect to farmer's store page
       router.push("/landing_famer_store");
     } catch (error) {
       console.error("Error creating store:", error);
       setError(error instanceof Error ? error.message : "Failed to create store");
-      alert(error instanceof Error ? error.message : "Failed to create store");
     } finally {
       setIsSubmitting(false);
     }
@@ -164,9 +135,6 @@ export default function CreateStore() {
                   <FormControl>
                     <Input className="w-full" placeholder="This is how customers will identify your store..." {...field} />
                   </FormControl>
-                  <FormDescription>
-           
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -185,8 +153,6 @@ export default function CreateStore() {
                       {...field} 
                     />
                   </FormControl>
-                  <FormDescription>
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -194,40 +160,36 @@ export default function CreateStore() {
 
             <FormField
               control={form.control}
-              name="storeImageUrl"
+              name="storeImage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Store Banner Image URL</FormLabel>
+                  <FormLabel>Store Image</FormLabel>
                   <FormControl>
-                    <Input 
-                      className="w-full" 
-                      type="text" 
-                      placeholder="https://example.com/your-store-image.jpg" 
-                      {...field} 
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        field.onChange(file);
+                        if (file) {
+                          const previewUrl = URL.createObjectURL(file);
+                          setImagePreview(previewUrl);
+                        }
+                      }}
                     />
                   </FormControl>
-                  <FormDescription>
-                    An image URL for your store banner (optional). URLs from image services like Unsplash or stock photo sites are supported.
-                    {imageError && <span className="text-red-500 ml-2">Image URL is invalid. Using default image.</span>}
-                  </FormDescription>
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <p className="text-sm font-medium mb-1">Image Preview:</p>
+                      <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover rounded-md" />
+                    </div>
+                  )}
+                  <FormDescription>Upload a store banner image from your device</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Image Preview */}
-            <div className="mt-4 border rounded-md p-2">
-              <p className="text-sm font-medium mb-2">Banner Preview:</p>
-              <div className="relative h-45 w-full overflow-hidden rounded-md">
-                <img
-                  src={imagePreview}
-                  alt="Store Banner Preview"
-                  className="w-full h-full object-cover"
-                  onError={handleImageError}
-                />
-              </div>
-            </div>
-      
             <div className="flex justify-center pt-4">
               <Button 
                 type="submit" 
