@@ -1,0 +1,21 @@
+# GET http://localhost:5004/api/stores
+# POST http://localhost:5004/api/stores
+# Content-Type: application/json
+# Authorization: Bearer Tiger
+
+# {
+#   "name": "测试店铺",
+#   "description": "一个很棒的测试店铺",
+#   "imageUrl": "https://example.com/store.jpg"
+# }
+
+
+# POST http://localhost:5004/api/users/register
+
+POST http://localhost:5004/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "yourpassword"
+}

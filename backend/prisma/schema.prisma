@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User role enum
+enum UserRole {
+  CUSTOMER
+  FARMER
+  ADMIN
+}
+
+// Order status enum
+enum OrderStatus {
+  PENDING
+  PREPARED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+// User model - Extended from the original model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      UserRole @default(CUSTOMER)
+  name      String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  //updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
+
+  // Relationships
+  stores    Store[]      // Stores owned by farmers
+  orders    Order[]      // Orders placed by customers
+  reviews   Review[]     // Reviews given by users
+  cartItems Cart[]       // A user can have multiple cart items
+}
+
+// Store model
+model Store {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?
+  rating      Float?   @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  ownerId     String   // Store owner (Farmer)
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  products    Product[] // Products in the store
+  reviews     Review[]  // Reviews for the store
+
+  @@index([ownerId])
+}
+
+// Product category enum - Updated based on client requirements
+enum ProductCategory {
+  WHEAT      // Wheat
+  SUGAR_CANE // Sugar Cane
+  LENTILS    // Lentils
+  FRUIT      // Fruit
+  VEGGIE     // Vegetables
+}
+
+// Product model
+model Product {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  imageUrl    String?
+  quantity    Int             @default(0)
+  category    ProductCategory @default(VEGGIE)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relationships
+  storeId     String          // Store to which the product belongs
+  store       Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]     // Items in an order
+  cartItems   Cart[]          // A product can be in multiple shopping carts
+
+  @@index([storeId])
+  @@index([category])
+}
+
+// Order model
+model Order {
+  id          String      @id @default(uuid())
+  totalAmount Float
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relationships
+  customerId  String      // Customer placing the order
+  customer    User        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items       OrderItem[] // Items in the order
+
+  @@index([customerId])
+  @@index([status])
+}
+
+// Order item model
+model OrderItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+  price     Float    // Price at the time of order
+  createdAt DateTime @default(now())
+
+  // Relationships
+  orderId   String   // Order to which this item belongs
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String   // Product in the order
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// Review model
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1-5 star rating
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  userId    String   // Reviewer
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId   String   // Store being reviewed
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([storeId])
+}
+
+// Cart model
+model Cart {
+  id         String   @id @default(uuid())  // Shopping cart ID
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String
+
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+
+  quantity   Int      @default(1)
+  createdAt  DateTime @default(now())
+}
+
+//generator client {
+//  provider = "prisma-client-js"
+//  seed = "node prisma/seed.js"
+//}
