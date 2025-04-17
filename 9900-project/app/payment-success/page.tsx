@@ -5,71 +5,90 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 
-interface DemoOrderItem {
-  productId: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
-
-interface DemoOrder {
-  id: string;
-  email: string;
-  items: DemoOrderItem[];
+interface OrderSummary {
+  orderCount: number;
+  orderIds: string[];
   total: number;
-  status: string;
   createdAt: string;
 }
 
+interface OrderDetails {
+  id: string;
+  totalAmount: number;
+  status: string;
+  items: {
+    quantity: number;
+    price: number;
+    product: {
+      id: string;
+      name: string;
+      imageUrl?: string;
+      store: {
+        id: string;
+        name: string;
+      };
+    };
+  }[];
+}
+
 export default function PaymentSuccessPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoggedIn, user } = useAuth();
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [orderDetails, setOrderDetails] = useState<DemoOrder | null>(null);
+  const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get the order ID from the URL query parameters
-    const id = searchParams.get('orderId');
-    setOrderId(id);
-
-    // Check if this is a demo order from localStorage
-    if (id && id.startsWith('demo-')) {
-      try {
-        const demoOrderStr = localStorage.getItem('demoOrder');
-        if (demoOrderStr) {
-          const demoOrder = JSON.parse(demoOrderStr);
-          setOrderDetails(demoOrder);
+    try {
+      // Get the order summary from localStorage
+      const ordersStr = localStorage.getItem('orders');
+      if (ordersStr) {
+        const orders = JSON.parse(ordersStr);
+        setOrderSummary(orders);
+        
+        if (isLoggedIn && orders.orderIds && orders.orderIds.length > 0) {
+          // Fetch details for all orders if user is logged in
+          fetchOrdersDetails(orders.orderIds);
+        } else {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error parsing demo order:', error);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
-    } else if (id && isLoggedIn) {
-      // This is a real order and user is logged in
-      fetchOrderDetails(id);
-    } else {
+    } catch (error) {
+      console.error('Error parsing orders:', error);
       setLoading(false);
     }
-  }, [searchParams, isLoggedIn]);
+  }, [isLoggedIn]);
 
-  const fetchOrderDetails = async (id: string) => {
+  const fetchOrdersDetails = async (orderIds: string[]) => {
     try {
-      // You would replace this with your actual API endpoint
-      const response = await fetch(`http://localhost:5001/api/orders/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setOrderDetails(data);
-      }
+      setLoading(true);
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) return;
+      
+      const detailsPromises = orderIds.map(id => 
+        fetch(`http://localhost:5001/api/orders/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(response => {
+          if (response.ok) return response.json();
+          throw new Error(`Failed to fetch order ${id}`);
+        })
+      );
+      
+      const results = await Promise.allSettled(detailsPromises);
+      
+      const successfulOrders = results
+        .filter((result): result is PromiseFulfilledResult<OrderDetails> => 
+          result.status === 'fulfilled'
+        )
+        .map(result => result.value);
+      
+      setOrderDetails(successfulOrders);
     } catch (error) {
       console.error('Error fetching order details:', error);
     } finally {
@@ -90,9 +109,17 @@ export default function PaymentSuccessPage() {
           <p className="mt-3 text-xl text-gray-500">
             Thank you for your purchase from Fresh Harvest.
           </p>
-          {orderId && (
+          {orderSummary && (
             <p className="mt-2 text-gray-600">
-              Order ID: <span className="font-medium">{orderId}</span>
+              {orderSummary.orderCount > 1 ? (
+                <>
+                  You have placed {orderSummary.orderCount} orders
+                </>
+              ) : (
+                <>
+                  Order ID: <span className="font-medium">{orderSummary.orderIds[0]}</span>
+                </>
+              )}
             </p>
           )}
         </div>
@@ -101,7 +128,7 @@ export default function PaymentSuccessPage() {
           <div className="text-center sm:text-left">
             <h2 className="text-lg font-medium text-gray-900">Order Confirmation</h2>
             <p className="mt-2 text-sm text-gray-500">
-              We've sent a confirmation email to {orderDetails?.email || user?.email || 'your email address'}.
+              We've sent a confirmation email to {user?.email || 'your email address'}.
               {isLoggedIn && ' You can view your order details in your account.'}
             </p>
           </div>
@@ -110,23 +137,58 @@ export default function PaymentSuccessPage() {
             <div className="mt-6 flex justify-center">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
             </div>
-          ) : orderDetails ? (
+          ) : orderDetails.length > 0 ? (
+            <div className="mt-6 border-t border-gray-200 pt-6 space-y-8">
+              {orderDetails.map((order, orderIndex) => (
+                <div key={order.id} className={orderIndex > 0 ? "pt-6 border-t border-gray-200" : ""}>
+                  <h3 className="text-base font-medium text-gray-900">
+                    Order from {order.items[0]?.product.store.name || 'Unknown Store'}
+                  </h3>
+                  <p className="text-sm text-gray-500">Order ID: {order.id}</p>
+                  
+                  <div className="mt-4 space-y-4">
+                    {order.items.map((item, itemIndex) => (
+                      <div key={itemIndex} className="flex justify-between text-sm">
+                        <div>
+                          <span className="font-medium">{item.product.name}</span>
+                          <span className="text-gray-500 ml-2">x {item.quantity}</span>
+                        </div>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    
+                    <div className="pt-4 border-t border-gray-200 flex justify-between font-medium">
+                      <span>Order Total</span>
+                      <span>${order.totalAmount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {orderSummary && (
+                <div className="pt-4 border-t border-gray-200 flex justify-between font-bold text-lg">
+                  <span>Grand Total</span>
+                  <span>${orderSummary.total.toFixed(2)}</span>
+                </div>
+              )}
+              
+              <div className="mt-6 bg-gray-50 p-4 rounded-md">
+                <p className="text-sm text-gray-600">
+                  Your items will be shipped to you soon. You'll receive shipping updates via email.
+                </p>
+              </div>
+            </div>
+          ) : orderSummary ? (
             <div className="mt-6 border-t border-gray-200 pt-6">
               <h3 className="text-base font-medium text-gray-900">Order Summary</h3>
-              <div className="mt-4 space-y-4">
-                {orderDetails.items.map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <div>
-                      <span className="font-medium">{item.name || `Product #${item.productId}`}</span>
-                      <span className="text-gray-500 ml-2">x {item.quantity}</span>
-                    </div>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
-                  </div>
-                ))}
+              <div className="mt-4">
+                <p className="text-gray-600">
+                  You've successfully placed {orderSummary.orderCount} {orderSummary.orderCount > 1 ? 'orders' : 'order'}.
+                </p>
                 
-                <div className="pt-4 border-t border-gray-200 flex justify-between font-medium">
+                <div className="pt-4 border-t border-gray-200 flex justify-between font-medium mt-4">
                   <span>Total</span>
-                  <span>${orderDetails.total?.toFixed(2) || '0.00'}</span>
+                  <span>${orderSummary.total.toFixed(2)}</span>
                 </div>
               </div>
               

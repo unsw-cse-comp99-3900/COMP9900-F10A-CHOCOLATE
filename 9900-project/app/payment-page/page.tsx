@@ -2,12 +2,22 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCart, CartItem } from "@/lib/CartContext";
-import { useState, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/AuthContext";
+import { AlertCircle } from "lucide-react";
+
+// Interface for items grouped by store
+interface StoreGroup {
+  storeName: string;
+  items: CartItem[];
+  total: number;
+}
 
 export default function PaymentPage() {
   const router = useRouter();
   const { cartItems, clearCart } = useCart();
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [nameOnCard, setNameOnCard] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -16,6 +26,8 @@ export default function PaymentPage() {
   const [country, setCountry] = useState("Australia");
   const [saveInfo, setSaveInfo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [storeGroups, setStoreGroups] = useState<StoreGroup[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Error states for each field
   const [errors, setErrors] = useState({
@@ -28,6 +40,30 @@ export default function PaymentPage() {
 
   // Calculate cart total
   const total = cartItems.reduce((acc: number, item: CartItem) => acc + item.price * item.quantity, 0);
+
+  // Group cart items by store
+  useEffect(() => {
+    const groups: Record<string, StoreGroup> = {};
+    
+    cartItems.forEach(item => {
+      // If this store hasn't been seen yet, create a new group
+      if (!groups[item.farm]) {
+        groups[item.farm] = {
+          storeName: item.farm,
+          items: [],
+          total: 0
+        };
+      }
+      
+      // Add item to its store group
+      groups[item.farm].items.push(item);
+      // Update store group total
+      groups[item.farm].total += item.price * item.quantity;
+    });
+    
+    // Convert groups object to array for rendering
+    setStoreGroups(Object.values(groups));
+  }, [cartItems]);
 
   // Validate email format
   const validateEmail = (email: string) => {
@@ -66,10 +102,40 @@ export default function PaymentPage() {
     }
   };
 
+  // Create a single order in the backend
+  const createOrder = async (items: { productId: string; quantity: number }[]) => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const response = await fetch('http://localhost:5001/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ items })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create order');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating order:", error);
+      throw error;
+    }
+  };
+
   async function handlePay() {
     // Prevent multiple submissions
     if (isSubmitting) return;
     setIsSubmitting(true);
+    setErrorMessage(null);
 
     // Reset all errors
     const newErrors = {
@@ -113,6 +179,13 @@ export default function PaymentPage() {
       hasErrors = true;
     }
 
+    // Check if cart is empty
+    if (cartItems.length === 0) {
+      setErrorMessage("Your cart is empty. Please add items before proceeding to payment.");
+      setIsSubmitting(false);
+      return;
+    }
+
     // Update error state
     setErrors(newErrors);
     
@@ -123,40 +196,56 @@ export default function PaymentPage() {
     }
 
     try {
-      // Create a demo order for the success page
-      const demoOrder = {
-        id: 'demo-' + Date.now(),
-        email: email,
-        items: cartItems.map(item => ({
+      // Check if user is logged in
+      if (!user || user.role !== 'CUSTOMER') {
+        setErrorMessage("You must be logged in as a customer to complete your purchase");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const createdOrders = [];
+      
+      // Create separate orders for each store
+      for (const storeGroup of storeGroups) {
+        const orderItems = storeGroup.items.map(item => ({
           productId: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-        })),
+          quantity: item.quantity
+        }));
+        
+        // Create the order in the backend
+        const orderResult = await createOrder(orderItems);
+        createdOrders.push(orderResult);
+      }
+      
+      // Store order details for success page
+      localStorage.setItem('orders', JSON.stringify({
+        orderCount: createdOrders.length,
+        orderIds: createdOrders.map(order => order.id),
         total: total,
-        status: 'processing',
         createdAt: new Date().toISOString()
-      };
+      }));
       
-      // Store the order details in localStorage for the success page
-      localStorage.setItem('demoOrder', JSON.stringify(demoOrder));
-      
-      // Clear cart
+      // Clear cart after successful orders
       clearCart();
       
-      // Simulate processing delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirect to success page with the order ID
-      router.push(`/payment-success?orderId=${demoOrder.id}`);
-    } catch (error) {
+      // Redirect to success page
+      router.push(`/payment-success`);
+    } catch (error: any) {
       console.error("Payment error:", error);
+      setErrorMessage(error.message || "Failed to process payment. Please try again.");
       setIsSubmitting(false);
     }
   }
 
   return (
     <div className="container mx-auto px-4 py-8 lg:py-12">
+      {errorMessage && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+          <span className="text-red-800">{errorMessage}</span>
+        </div>
+      )}
+      
       <div className="flex flex-col md:flex-row gap-8 bg-white shadow-xl rounded-lg p-6 lg:p-10">
         {/* Order summary - full width on mobile, side by side on larger screens */}
         <div className="w-full md:w-1/2 flex flex-col gap-6">
@@ -166,12 +255,26 @@ export default function PaymentPage() {
           </div>
 
           <div className="border-t border-b py-4">
-            <p className="font-medium">Details of order</p>
-            <div className="max-h-60 overflow-y-auto my-2">
-              {cartItems.map((item: CartItem) => (
-                <p key={item.id} className="text-gray-600 py-1">
-                  {item.name} x {item.quantity} = ${(item.price * item.quantity).toFixed(2)}
-                </p>
+            <p className="font-medium text-lg mb-2">Details of order</p>
+            <div className="max-h-[350px] overflow-y-auto space-y-4 my-2">
+              {storeGroups.map((group, idx) => (
+                <div key={idx} className="border rounded-md p-3">
+                  <h3 className="font-medium text-md">{group.storeName}</h3>
+                  <hr className="my-2 border-gray-200" />
+                  
+                  {group.items.map((item: CartItem) => (
+                    <div key={item.id} className="text-gray-600 py-1 flex justify-between">
+                      <span>{item.name} x {item.quantity}</span>
+                      <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                  
+                  <hr className="my-2 border-gray-200" />
+                  <div className="font-medium text-sm flex justify-between">
+                    <span>Store Total:</span>
+                    <span>${group.total.toFixed(2)}</span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>

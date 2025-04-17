@@ -48,6 +48,8 @@ export default function ProductDetailPage() {
         
         const productData = await productResponse.json();
         setProduct(productData);
+
+        console.log("productData", productData);
         
         // For similar products
         if (productData.category) {
@@ -91,7 +93,8 @@ export default function ProductDetailPage() {
       name: product.name,
       price: product.price,
       quantity: quantity,
-      imageUrl: product.imageUrl
+      imageUrl: product.imageUrl,
+      farm: product.store.name
     });
     
     // Show cart after adding item
@@ -149,7 +152,7 @@ export default function ProductDetailPage() {
           <div className="w-full md:w-1/2 flex flex-col gap-6">
             <h2 className="text-4xl font-bold">{product.name}</h2>
             <p className="text-gray-600 text-xl">
-              Farmer: <span className="font-semibold">{product.farmer || "Unknown Farmer"}</span>
+              Farmer: <span className="font-semibold">{product.store.name}</span>
             </p>
             <p className="text-xl text-gray-600">{product.description || "No description available."}</p>
             <p className="text-3xl font-bold text-green-600">${product.price?.toFixed(2)}</p>
@@ -190,13 +193,17 @@ export default function ProductDetailPage() {
                   className="bg-white p-4 shadow rounded-lg flex flex-col items-center cursor-pointer hover:shadow-xl transition-shadow"
                   onClick={() => router.push(`/productDetail-page?id=${similar.id}`)}
                 >
-                  <Image
-                    src={similar.imageUrl || "/product-placeholder.jpg"}
-                    alt={similar.name}
-                    width={200}
-                    height={200}
-                    className="object-cover rounded-md mb-4"
-                  />
+                  <div className="w-full h-48 mb-4 relative">
+                    <img
+                      src={similar.imageUrl || "/product-placeholder.jpg"}
+                      alt={similar.name}
+                      className="w-full h-full object-cover rounded-md"
+                      onError={(e) => {
+                        // If image fails to load, use placeholder
+                        e.currentTarget.src = "/product-placeholder.jpg";
+                      }}
+                    />
+                  </div>
                   <h4 className="text-xl font-semibold mb-2">{similar.name}</h4>
                   <p className="text-green-600 font-bold">${similar.price?.toFixed(2)}</p>
                 </div>
