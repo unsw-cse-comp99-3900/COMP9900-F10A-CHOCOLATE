@@ -212,7 +212,7 @@ export default function PaymentSuccessPage() {
             </Link>
             
             {isLoggedIn && (
-              <Link href="/account/orders" className="w-full sm:w-auto">
+              <Link href="/Customer-Order" className="w-full sm:w-auto">
                 <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-50 py-3 rounded">
                   View My Orders
                 </Button>
