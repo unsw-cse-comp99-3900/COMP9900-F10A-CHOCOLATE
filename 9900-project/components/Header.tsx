@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useCart } from '@/lib/CartContext';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -25,6 +26,9 @@ const Header = () => {
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [searchType, setSearchType] = useState("product");
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  const { cartItems } = useCart();
+  const [cartCount, setCartCount] = useState(0);
+
   
   // Define fixed categories with subcategories
   const categoryData = [
@@ -252,7 +256,7 @@ const Header = () => {
                         My Store
                       </Link>
                     )}
-                    <Link href={isLoggedIn && user?.role === "FARMER" ? "/farmer-orders" : "/customer-orders"} className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
+                    <Link href={isLoggedIn && user?.role === "FARMER" ? "/farmer-orders" : "/Cusomer-Order"} className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
                       My Orders    
                     </Link>
                     <button 

@@ -100,6 +100,10 @@ export default function LoginPage() {
           sessionStorage.setItem('token', data.token);
           sessionStorage.setItem('user', JSON.stringify(data.user));
         }
+
+        console.log(
+          "Login successful:", data.user, data.token
+        )
         
         // Redirect to home page after successful login
         // setTimeout(() => {
