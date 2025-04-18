@@ -93,23 +93,24 @@ export default function LoginPage() {
         // Store token and user data
         if (rememberMe) {
           // Store in localStorage for persistent login
+          console.log("Storing in localStorage - User data:", data.user);
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
+          console.log("Verification - localStorage user after setting:", localStorage.getItem('user'));
         } else {
           // Store in sessionStorage for session-only login
+          console.log("Storing in sessionStorage - User data:", data.user);
           sessionStorage.setItem('token', data.token);
           sessionStorage.setItem('user', JSON.stringify(data.user));
+          console.log("Verification - sessionStorage user after setting:", sessionStorage.getItem('user'));
         }
 
-        console.log(
-          "Login successful:", data.user, data.token
-        )
+        console.log("Storage type being used:", rememberMe ? "localStorage" : "sessionStorage");
         
         // Redirect to home page after successful login
-        // setTimeout(() => {
-        //   router.push('/');
-        // }, 1500);
         setTimeout(() => {
+          const storedUser = rememberMe ? localStorage.getItem('user') : sessionStorage.getItem('user');
+          console.log("User data before redirect:", storedUser);
           handleRedirectAfterAuth(data.user, router);
         }, 1500);        
       } else {
