@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/CartContext';
+import CartSlide from './CartSlide';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -28,6 +29,7 @@ const Header = () => {
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const { cartItems } = useCart();
   const [cartCount, setCartCount] = useState(0);
+  const [cartSlideOpen, setCartSlideOpen] = useState(false);
 
   
   // Define fixed categories with subcategories
@@ -92,6 +94,22 @@ const Header = () => {
     e.preventDefault(); // stop page from refreshing
     const input = e.currentTarget.input.value;
     router.push(`/search?q=${input}&type=${searchType}`)
+  };
+
+  // Handle cart items total and count
+  useEffect(() => {
+    if (cartItems) {
+      const count = cartItems.reduce((total, item) => total + item.quantity, 0);
+      setCartCount(count);
+    }
+  }, [cartItems]);
+
+  // Calculate cart total price
+  const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+  // Handle cart slide toggle
+  const toggleCartSlide = () => {
+    setCartSlideOpen(!cartSlideOpen);
   };
 
   return (
@@ -221,17 +239,20 @@ const Header = () => {
         <div className="flex items-center space-x-4">
           {/* Mobile view - show cart icon here for mobile only */}
           <div className="md:hidden">
-            <Link href="/cart" className="relative p-2 hover:bg-gray-200 rounded-full transition-colors">
+            <button 
+              onClick={toggleCartSlide}
+              className="relative p-2 hover:bg-gray-200 rounded-full transition-colors"
+            >
               <div className="flex flex-col items-center">
                 <div className="relative">
                   <ShoppingCart size={24} className="text-black" />
                   <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                    0
+                    {cartCount}
                   </span>
                 </div>
-                <div className="text-xs font-medium mt-1">$0.00</div>
+                <div className="text-xs font-medium mt-1">${cartTotal.toFixed(2)}</div>
               </div>
-            </Link>
+            </button>
           </div>
 
           {isLoggedIn ? (  // if user is logged in, display My Account droplist button 
@@ -273,20 +294,23 @@ const Header = () => {
               {/* Desktop cart for logged in users */}
               {user?.role !== "FARMER" && (
                 <div className="hidden md:block">
-                  <Link href="/cart" className="relative p-2 hover:bg-gray-200 rounded-lg transition-colors group">
+                  <button 
+                    onClick={toggleCartSlide}
+                    className="relative p-2 hover:bg-gray-200 rounded-lg transition-colors group"
+                  >
                     <div className="flex items-center space-x-2">
                       <div className="relative">
                         <ShoppingCart size={24} className="text-black group-hover:text-green-600 transition-colors" />
                         <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                          0
+                          {cartCount}
                         </span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-xs font-medium">Your Cart</span>
-                        <span className="text-sm font-bold">$0.00</span>
+                        <span className="text-sm font-bold">${cartTotal.toFixed(2)}</span>
                       </div>
                     </div>
-                  </Link>
+                  </button>
                 </div>
               )}
             </>
@@ -307,20 +331,23 @@ const Header = () => {
               
               {/* Desktop cart for guest users - positioned after register button */}
               <div className="hidden md:block">
-                <Link href="/cart" className="relative p-2 hover:bg-gray-200 rounded-lg transition-colors group">
+                <button 
+                  onClick={toggleCartSlide}
+                  className="relative p-2 hover:bg-gray-200 rounded-lg transition-colors group"
+                >
                   <div className="flex items-center space-x-2">
                     <div className="relative">
                       <ShoppingCart size={24} className="text-black group-hover:text-green-600 transition-colors" />
                       <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                        0
+                        {cartCount}
                       </span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs font-medium">Your Cart</span>
-                      <span className="text-sm font-bold">$0.00</span>
+                      <span className="text-sm font-bold">${cartTotal.toFixed(2)}</span>
                     </div>
                   </div>
-                </Link>
+                </button>
               </div>
             </>
           )}
@@ -346,9 +373,12 @@ const Header = () => {
             {/* Only show cart for non-farmers in mobile view */}
             {user?.role !== "FARMER" && (
               <li className="py-2 px-4 border-b border-gray-700">
-                <Link href="/cart" className="font-semibold hover:text-gray-300 transition-colors block">
-                  CART
-                </Link>
+                <button 
+                  onClick={toggleCartSlide}
+                  className="font-semibold hover:text-gray-300 transition-colors block text-white w-full text-left"
+                >
+                  CART ({cartCount})
+                </button>
               </li>
             )}
             <li className="py-2 px-4 border-b border-gray-700">
@@ -512,6 +542,8 @@ const Header = () => {
           </div>
         </div>
       </nav>
+
+      <CartSlide isOpen={cartSlideOpen} onClose={() => setCartSlideOpen(false)} />
     </header>
   );
 }

@@ -8,7 +8,7 @@ import { Minus, Plus, ShoppingCart, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
-import Cart from "@/components/cart";
+import CartSlide from "@/components/CartSlide";
 
 export default function ProductDetailPage() {
   const searchParams = useSearchParams();
@@ -21,7 +21,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartSlideOpen, setCartSlideOpen] = useState(false);
   // Keep the API port as a constant in case it needs to be changed later
   const API_PORT = "5001";
 
@@ -97,8 +97,8 @@ export default function ProductDetailPage() {
       farm: product.store.name
     });
     
-    // Show cart after adding item
-    setIsCartOpen(true);
+    // Show cart slide after adding item
+    setCartSlideOpen(true);
   };
 
   const goBack = () => {
@@ -213,8 +213,8 @@ export default function ProductDetailPage() {
         )}
       </div>
 
-      {/* Shopping Cart Sidebar */}
-      <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      {/* Shopping Cart Slide */}
+      <CartSlide isOpen={cartSlideOpen} onClose={() => setCartSlideOpen(false)} />
     </div>
   );
 }

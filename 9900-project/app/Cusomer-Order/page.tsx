@@ -64,10 +64,6 @@ export default function CustomerOrderPage() {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-      if (!token || !user.id) {
-        throw new Error('Authentication token or user ID not found');
-      }
-
       const response = await fetch('http://localhost:5001/api/orders', {
         headers: {
           'Authorization': `Bearer ${token}`
