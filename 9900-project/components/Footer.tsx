@@ -1,9 +1,17 @@
+'use client';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Facebook, Instagram, Twitter } from 'lucide-react';
 import { Button } from './ui/button';
+import { useState } from 'react';
 
 const Footer = () => {
+  const [email, setEmail] = useState('');
+
+  const handleSubscribe = () => {
+    setEmail('');
+  };
+
   return (
     <footer className="bg-gray-100  pb-8">
       {/* Newsletter Subscription */}
@@ -18,9 +26,11 @@ const Footer = () => {
                 <input
                   type="email"
                   placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="px-6 py-3 rounded-l-full w-full lg:w-[400px] focus:outline-none bg-white border border-gray-300 h-full"
                 />
-                <Button className="bg-white text-black hover:bg-gray-200 rounded-r-full px-8 h-full font-medium border border-l-0 border-gray-300">
+                <Button onClick={handleSubscribe} className="bg-white text-black hover:bg-gray-200 rounded-r-full px-8 h-full font-medium border border-l-0 border-gray-300">
                   Subscribe
                 </Button>
               </div>
