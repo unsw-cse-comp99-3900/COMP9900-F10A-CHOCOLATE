@@ -420,13 +420,13 @@ const Header = () => {
                           </Link>
                           <div className="ml-4 pl-6 border-l border-gray-700 space-y-1 py-1">
                             {category.subcategories.map((subcategory, subIndex) => (
-                              <Link 
+                              <Button 
                                 key={subIndex} 
-                                href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase()}`}
+                                onClick={() => router.push(`/search?q=${subcategory}&type=${'product'}`)}
                                 className="block py-1 px-4 text-gray-400 hover:text-white text-sm"
                               >
                                 {subcategory}
-                              </Link>
+                              </Button>
                             ))}
                           </div>
                         </div>
@@ -503,12 +503,12 @@ const Header = () => {
                         <ul className="space-y-2 mt-3">
                           {category.subcategories.map((subcategory, subIndex) => (
                             <li key={subIndex}>
-                              <Link 
-                                href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase().replace(/\s+/g, '-')}`}
-                                className="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded"
+                              <Button 
+                                 onClick={() => router.push(`/search?q=${subcategory}&type=${'product'}`)}
+                                className="block px-4 py-2 text-sm bg-white text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded"
                               >
                                 {subcategory}
-                              </Link>
+                              </Button>
                             </li>
                           ))}
                         </ul>
