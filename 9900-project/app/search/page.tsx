@@ -24,6 +24,7 @@ interface Store {
   imageUrl?: string;
   description?: string;
   rating?: number;
+  ownerId: string;
   owner: {
     name: string;
   };
@@ -181,8 +182,8 @@ export default function SearchPage() {
               {stores.length > 0 ? (
                 stores.map((store) => (
                   <Link 
-                    href={`/farmer-page?id=${store.id}`}
-                    key={store.id}
+                    href={`/farmer-page/${store.ownerId}`}
+                    key={store.ownerId}
                     className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4"
                   >
                     <div className="relative w-full h-40 mb-3 bg-gray-100 rounded-md overflow-hidden">

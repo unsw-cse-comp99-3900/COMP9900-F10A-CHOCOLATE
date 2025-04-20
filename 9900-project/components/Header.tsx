@@ -198,7 +198,7 @@ const Header = () => {
                 onClick={toggleSearchDropdown}
                 className="h-full py-3 px-2 border border-r-0 border-black/30 rounded-l-full bg-white flex items-center justify-between w-full text-left"
               >
-                <span className="truncate text-sm ml-2 font-semibold">{searchType === "product" ? "Products" : "Farmers"}</span>
+                <span className="truncate text-xs ml-2 font-semibold">{searchType === "product" ? "Products" : "Farmers"}</span>
                 <ChevronDown className="h-4 w-4 ml-1 flex-shrink-0" />
               </button>
               
