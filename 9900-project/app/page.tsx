@@ -156,6 +156,9 @@ export default function Home() {
             Meet our top farmers, dedicated to bringing you the freshest, highest-quality produce <br className="hidden md:block"/>
             straight from the farm.
           </p>
+          <Link href="/farmers-list" className="inline-block mt-2 text-blue-600 hover:text-blue-800 transition-colors">
+            View All Farmers →
+          </Link>
         </div>
 
         {/* 如果 farmers 为空，显示 "Loading..." */}
