@@ -42,6 +42,7 @@ export default function EditProduct() {
   const [error, setError] = useState<string | null>(null);
   const [productData, setProductData] = useState<any>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Define form with default values
   const form = useForm<z.infer<typeof formSchema>>({
@@ -126,6 +127,53 @@ export default function EditProduct() {
       fetchStoreData();
     }
   }, [user, storeId, isLoading]);
+
+  // Add delete product function
+  const handleDeleteProduct = async () => {
+    if (!productId) {
+      alert("Product ID is missing");
+      return;
+    }
+
+    // Confirm deletion
+    if (!window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+    if (!token) {
+      alert("Authentication token not found. Please log in again.");
+      router.push("/login-page");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete product');
+      }
+
+      setSuccess("Product deleted successfully!");
+      // Redirect to the farmer's store page after a short delay
+      setTimeout(() => {
+        router.push('/landing_famer_store');
+      }, 1500);
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert(error instanceof Error ? error.message : "Failed to delete product");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!productId) {
@@ -321,21 +369,29 @@ export default function EditProduct() {
             </div>
           )}
     
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-4">
             <Button 
               type="button" 
-              className="w-[48%]" 
+              className="w-1/3" 
               variant="outline"
               onClick={() => router.push("/landing_famer_store")}
             >
               Cancel
             </Button>
             <Button 
+              type="button"
+              className="w-1/3 bg-red-600 hover:bg-red-700 text-white"
+              onClick={handleDeleteProduct}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+            <Button 
               type="submit" 
-              className="w-[48%] bg-green-600 hover:bg-green-700 text-white" 
+              className="w-1/3 bg-green-600 hover:bg-green-700 text-white" 
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Updating..." : "Update Product"}
+              {isSubmitting ? "Updating..." : "Update"}
             </Button>
           </div>
         </form>
