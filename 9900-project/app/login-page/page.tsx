@@ -184,6 +184,7 @@ export default function LoginPage() {
                               <SelectGroup>
                                 <SelectItem value="CUSTOMER">Customer</SelectItem>
                                 <SelectItem value="FARMER">Farmer</SelectItem>
+                                <SelectItem value="ADMIN">Admin</SelectItem>
                               </SelectGroup>
                             </SelectContent>
                           </Select>
