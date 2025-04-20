@@ -25,10 +25,47 @@ const authenticateToken = (req, res, next) => {
 };
 
 /**
+ * 🔹 Get all users' carts (GET /api/cart/all)
+ * Admin only route
+ */
+router.get('/all', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'ADMIN') {
+    return res.status(403).json({ message: 'Only admin can access all carts' });
+  }
+  try {
+    const allCarts = await prisma.cart.findMany({
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            imageUrl: true,
+            store: { select: { name: true } }
+          }
+        }
+      }
+    });
+
+    res.json(allCarts);
+  } catch (error) {
+    console.error("❌ Failed to retrieve all carts:", error);
+    res.status(500).json({ message: 'Failed to retrieve all carts' });
+  }
+});
+
+/**
  * 🔹 Get current user's cart (GET /api/cart)
  */
 router.get('/', authenticateToken, async (req, res) => {
-  if (req.user.role !== 'CUSTOMER') {
+  if (req.user.role !== 'CUSTOMER' && req.user.role !== 'ADMIN') {
     return res.status(403).json({ message: 'Only customers can access the cart' });
   }
   try {
