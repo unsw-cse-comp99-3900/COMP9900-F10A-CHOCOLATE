@@ -448,10 +448,10 @@ const Header = () => {
               </div>
               {mobileAboutOpen && (
                 <div className="bg-gray-800 py-1">
-                  <Link href="/about" className="block py-2 px-8 hover:bg-gray-700">
+                  <Link href="/AboutUs" className="block py-2 px-8 hover:bg-gray-700">
                     About Us
                   </Link>
-                  <Link href="/faq" className="block py-2 px-8 hover:bg-gray-700">
+                  <Link href="/FAQ-page" className="block py-2 px-8 hover:bg-gray-700">
                     FAQs
                   </Link>
                 </div>
@@ -526,10 +526,10 @@ const Header = () => {
               </button>
               <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-[200px] z-50">
                 <div className="py-2">
-                  <Link href="/about" className="block px-4 py-2 hover:bg-gray-100">
+                  <Link href="/AboutUs" className="block px-4 py-2 hover:bg-gray-100">
                     About Us
                   </Link>
-                  <Link href="/faq" className="block px-4 py-2 hover:bg-gray-100">
+                  <Link href="/FAQ-page" className="block px-4 py-2 hover:bg-gray-100">
                     FAQs
                   </Link>
                 </div>
