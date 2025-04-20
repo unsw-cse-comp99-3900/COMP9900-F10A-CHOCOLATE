@@ -52,13 +52,13 @@ const Footer = () => {
               />
             </div>
             <div className="flex justify-center space-x-4 mt-2">
-              <Link href="#" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
+              <Link href="https://www.facebook.com/" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
                 <Facebook size={30} />
               </Link>
-              <Link href="#" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
+              <Link href="https://www.instagram.com/" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
                 <Instagram size={30} />
               </Link>
-              <Link href="#" className="text-gray-600 hover:text-green-600 font-semibold  transition-colors">
+              <Link href="https://www.twitter.com/" className="text-gray-600 hover:text-green-600 font-semibold  transition-colors">
                 <Twitter size={30} />
               </Link>
             </div>
