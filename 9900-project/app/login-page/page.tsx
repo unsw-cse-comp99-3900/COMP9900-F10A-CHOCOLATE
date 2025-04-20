@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,7 +25,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
 import Head from 'next/head';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { handleRedirectAfterAuth } from '@/lib/navigation';//跳转到farmer or customer
 
@@ -38,11 +38,19 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [invalidCredentials, setInvalidCredentials] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  // Check URL parameter for admin access
+  useEffect(() => {
+    const isAdmin = searchParams.get('mode') === 'admin';
+    setShowAdmin(isAdmin);
+  }, [searchParams]);
 
   // Create a form instance
   const form = useForm<z.infer<typeof formSchema>>({
@@ -184,6 +192,7 @@ export default function LoginPage() {
                               <SelectGroup>
                                 <SelectItem value="CUSTOMER">Customer</SelectItem>
                                 <SelectItem value="FARMER">Farmer</SelectItem>
+                                {showAdmin && <SelectItem value="ADMIN">Admin</SelectItem>}
                               </SelectGroup>
                             </SelectContent>
                           </Select>

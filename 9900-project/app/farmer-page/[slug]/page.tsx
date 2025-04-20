@@ -83,7 +83,7 @@ export default function FarmerPage({ params }: { params: Promise<{ slug: string 
   };
 
   const handleGoBack = () => {
-      router.push("/#farmers"); // 跳转回 Home 页面 Farmers 区域
+    window.history.back();
   };
 
   // 计算分页数据
@@ -97,15 +97,18 @@ export default function FarmerPage({ params }: { params: Promise<{ slug: string 
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header Section */}
-      <section className="relative text-center py-20 h-[300px] flex items-center justify-center shadow-lg overflow-hidden w-full">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={handleGoBack}
-            className="w-12 h-12 bg-black text-white flex items-center justify-center rounded-full hover:bg-gray-800 transition"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <h1 className="text-6xl font-extrabold drop-shadow-lg">{farmer.name}</h1>
+      <section className="relative text-center py-20 flex items-center justify-center w-full bg-white">
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              onClick={handleGoBack}
+              className="w-12 h-12 bg-black text-white flex items-center justify-center rounded-full hover:bg-gray-800 transition cursor-pointer"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-6xl font-extrabold text-black">{farmer.name}</h1>
+          </div>
+          <p className="text-xl text-gray-600">High-quality fresh products from Fresh Market 1</p>
         </div>
       </section>
 
@@ -117,24 +120,19 @@ export default function FarmerPage({ params }: { params: Promise<{ slug: string 
               <img src={farmer.image} alt={farmer.name} className="object-cover w-full h-full" />
             </div>
             <div className="flex-1 space-y-4">
-                <h2 className="text-4xl font-extrabold text-gray-900">{farmer.name}</h2>
-                {/* 增加一条分割线，让布局更紧凑 */}
-                <div className="border-t border-gray-300 w-24 my-2"></div>
-                <p className="text-lg text-gray-600 leading-relaxed py-6">
-                    {farmer.description}
-                </p>
-                {/* 其他信息 */}
-                <div className="mt-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                    <span className="text-lg font-semibold text-gray-700">🌟 Rating:</span>
-                    <span className="text-lg text-yellow-500 font-bold">{farmer.rating}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                    <span className="text-lg font-semibold text-gray-700">🛒 Total Products:</span>
-                    <span className="text-lg text-gray-900">{products.length}</span>
-                    </div>
+              <h2 className="text-4xl font-extrabold text-gray-900">{farmer.name}</h2>
+              <div className="border-t border-gray-300 w-24 my-2"></div>
+              <p className="text-lg text-gray-600 leading-relaxed py-6">{farmer.description}</p>
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold text-gray-700">⭐ Rating:</span>
+                  <span className="text-lg text-yellow-500 font-bold">{farmer.rating}</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold text-gray-700">🛒 Total Products:</span>
+                  <span className="text-lg text-gray-900">{products.length}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
