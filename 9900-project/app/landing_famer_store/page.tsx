@@ -131,7 +131,7 @@ export default function FarmerOwnStorePage() {
           <h1 className="text-5xl font-extrabold drop-shadow-md">{store.name}</h1>
           <p className="mt-4 text-xl font-medium drop-shadow-sm">{store.description}</p>
           <button
-            onClick={() => router.push("/account/profile")}
+            onClick={() => router.push("/Farmer-Profile")}
             className="mt-6 px-6 py-3 bg-white text-black font-semibold rounded-md shadow hover:bg-gray-200 transition"
           >
             Change Profile

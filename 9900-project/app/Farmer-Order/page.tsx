@@ -244,8 +244,8 @@ export default function FarmerOrder() {
     );
 
     return (
-        <div className="p-6 max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
+        <div className="p-6 max-w-6xl mx-auto max-h-screen">
+            <div className="flex justify-center items-center mb-6">
                 <h1 className="text-2xl font-bold">Your Orders</h1>
             </div>
             
@@ -279,7 +279,7 @@ export default function FarmerOrder() {
             
             {orders.length === 0 ? (
                 <div className="bg-gray-50 p-8 rounded-lg text-center">
-                    <p className="text-gray-600">No orders found for your products.</p>
+                    <p className="text-gray-600">No orders found for your store.</p>
                 </div>
             ) : (
                 <div className="space-y-6">

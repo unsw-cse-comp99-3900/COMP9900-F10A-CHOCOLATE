@@ -273,7 +273,7 @@ const Header = () => {
                       My Profile
                     </Link>
                     {user?.role === "FARMER" && (
-                      <Link href="/account/store" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
+                      <Link href="/landing_famer_store" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
                         My Store
                       </Link>
                     )}

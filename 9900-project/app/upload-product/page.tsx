@@ -382,7 +382,7 @@ export default function UploadProduct() {
           </div>
     
           <div className="flex justify-center">
-            <Button type="submit" className="w-1/2" disabled={isSubmitting}>
+            <Button type="submit" className="w-1/2 mb-10" disabled={isSubmitting}>
               {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
