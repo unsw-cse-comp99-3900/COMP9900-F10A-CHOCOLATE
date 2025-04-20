@@ -262,21 +262,23 @@ router.put('/:id', authenticateToken, async (req, res) => {
         role: true,
         phone: true,
         address: true,
-        createdAt: true,
-        updatedAt: true
+        createdAt: true
       }
     });
 
-    res.json(updatedUser);
+    res.json({
+      message: 'User updated successfully',
+      user: updatedUser
+    });
   } catch (error) {
-    console.error("❌ Update User Error:", error);
-    res.status(500).json({ message: 'Failed to update user information' });
+    console.error("❌ Error updating user:", error);
+    res.status(500).json({ message: 'Failed to update user' });
   }
 });
 
 /**
- * 🔹 Delete user (DELETE /api/users/:id)
- * Users can delete their own accounts, admins can delete any user
+ * 🔹 Delete user account (DELETE /api/users/:id)
+ * Users can delete their own accounts, admins can delete any user account
  */
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
@@ -287,12 +289,13 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Permission denied' });
     }
 
-    // Delete user
-    await prisma.user.delete({ where: { id } });
+    await prisma.user.delete({
+      where: { id }
+    });
 
-    res.json({ message: 'User successfully deleted' });
+    res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error("❌ Delete User Error:", error);
+    console.error("❌ Error deleting user:", error);
     res.status(500).json({ message: 'Failed to delete user' });
   }
 });

@@ -141,7 +141,7 @@ export default function ProductDetailPage() {
           <div className="w-full md:w-1/2">
             <div className="relative w-full h-96">
               <Image
-                src={product.imageUrl || "/product-placeholder.jpg"}
+                src={product.imageUrl}
                 alt={product.name}
                 fill
                 className="object-cover rounded-md"

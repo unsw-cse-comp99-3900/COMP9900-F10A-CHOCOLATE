@@ -1,6 +1,7 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+const upload = require('./middleware/upload');
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -163,33 +164,32 @@ router.get('/:id', async (req, res) => {
  * 🔹 Create a product (POST /api/products)
  * Requires store owner permission
  */
-router.post('/', authenticateToken, async (req, res) => {
-  try {
-    const { storeId, name, description, price, quantity, imageUrl, category } = req.body;
+router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
+  try{
+    const { storeId, name, description, price, quantity, category, imageUrl: imageUrlFromBody } = req.body;
     
-    // Check required fields
+    // If image was uploaded directly, use that, otherwise use the imageUrl from the request body
+    const imageUrl = req.file 
+      ? `/uploads/${req.file.filename}` 
+      : imageUrlFromBody || null;
+    
+    console.log("Creating product with imageUrl:", imageUrl);
+
     if (!storeId || !name || price === undefined) {
       return res.status(400).json({ message: 'Store ID, name, and price are required' });
     }
 
-    // Validate price
     if (isNaN(price) || price < 0) {
       return res.status(400).json({ message: 'Price must be a positive number' });
     }
 
-    // Retrieve store information
     const store = await prisma.store.findUnique({ where: { id: storeId } });
-    
-    if (!store) {
-      return res.status(404).json({ message: 'Store not found' });
-    }
-    
-    // Check if user is the store owner
+    if (!store) return res.status(404).json({ message: 'Store not found' });
+
     if (store.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: 'Permission denied, only store owners can add products' });
+      return res.status(403).json({ message: 'Permission denied' });
     }
-    
-    // Create product
+
     const newProduct = await prisma.product.create({
       data: {
         name,
@@ -202,6 +202,7 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     });
     
+    console.log("Product created successfully with image:", imageUrl);
     res.status(201).json(newProduct);
   } catch (error) {
     console.error("❌ Error creating product:", error);
@@ -213,48 +214,43 @@ router.post('/', authenticateToken, async (req, res) => {
  * 🔹 Update a product (PUT /api/products/:id)
  * Requires store owner permission
  */
-router.put('/:id', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, description, price, quantity, imageUrl, category } = req.body;
-    
-    // Retrieve product and store information
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: { store: true }
-    });
-    
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+router.put('/:id', authenticateToken, upload.single('image'), async (req, res) => {
+  try{
+  const { id } = req.params;
+  const { name, description, price, quantity, category } = req.body;
+  const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: { store: true }
+  });
+
+  if (!product) return res.status(404).json({ message: 'Product not found' });
+
+  if (product.store.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
+    return res.status(403).json({ message: 'Permission denied' });
+  }
+
+  const updateData = {};
+  if (name) updateData.name = name;
+  if (description !== undefined) updateData.description = description;
+  if (price !== undefined) {
+    if (isNaN(price) || price < 0) {
+      return res.status(400).json({ message: 'Price must be a positive number' });
     }
-    
-    // Check permissions
-    if (product.store.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: 'Permission denied, only store owners can update products' });
-    }
-    
-    // Prepare update data
-    const updateData = {};
-    if (name) updateData.name = name;
-    if (description !== undefined) updateData.description = description;
-    if (price !== undefined) {
-      if (isNaN(price) || price < 0) {
-        return res.status(400).json({ message: 'Price must be a positive number' });
-      }
-      updateData.price = parseFloat(price);
-    }
-    if (quantity !== undefined) updateData.quantity = parseInt(quantity);
-    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
-    if (category) updateData.category = category;
-    
-    // Update product
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: updateData
-    });
-    
-    res.json(updatedProduct);
-  } catch (error) {
+    updateData.price = parseFloat(price);
+  }
+  if (quantity !== undefined) updateData.quantity = parseInt(quantity);
+  if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+  if (category) updateData.category = category;
+
+  const updatedProduct = await prisma.product.update({
+    where: { id },
+    data: updateData
+  });
+
+  res.json(updatedProduct);
+} catch (error) {
     console.error("❌ Error updating product:", error);
     res.status(500).json({ message: 'Failed to update product' });
   }
