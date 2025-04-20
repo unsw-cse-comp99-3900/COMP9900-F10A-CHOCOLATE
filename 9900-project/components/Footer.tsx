@@ -69,7 +69,7 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Customer Service</h3>
             <ul className="space-y-2 text-center">
               <li>
-                <Link href="/faq" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
+                <Link href="/FAQ-page" className="text-gray-600 hover:text-green-600 font-semibold transition-colors">
                   FAQs
                 </Link>
               </li>
