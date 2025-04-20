@@ -277,7 +277,7 @@ const Header = () => {
                         My Store
                       </Link>
                     )}
-                    <Link href={isLoggedIn && user?.role === "FARMER" ? "/farmer-orders" : "/Cusomer-Order"} className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
+                    <Link href={isLoggedIn && user?.role === "FARMER" ? "/Farmer-Order" : "/Cusomer-Order"} className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
                       My Orders    
                     </Link>
                     <button 
