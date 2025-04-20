@@ -99,7 +99,7 @@ export default function Home() {
             {[{ name: 'Fruit', image: '/fruit.jpg' },
               { name: 'Veggie', image: '/veggie.jpg' },
               { name: 'Wheat', image: '/wheat.jpg' },
-              { name: 'Sugar cane', image: '/sugar-cane.jpg' }
+              { name: 'Sugar_cane', image: '/sugar-cane.jpg' }
             ].map((category) => (
               <div key={category.name} className="relative h-64 overflow-hidden rounded-lg shadow-lg">
                 <Link href={`/product-page/${category.name}`} className="group relative h-64 block overflow-hidden rounded-lg shadow-lg">
