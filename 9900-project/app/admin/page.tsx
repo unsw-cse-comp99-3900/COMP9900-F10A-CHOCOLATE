@@ -2,14 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/AuthContext';
+import { useAuth } from '@/lib/AuthContext'; // 可选，如果你用 AuthContext 的话
 import { Button } from '@/components/ui/button';
-import { LogOut, Bell, LayoutDashboard, ShoppingCart, Users, Store, Eye } from 'lucide-react';
-import { 
-  DailyTransactionChart, 
-  MonthlyTrendChart, 
-  UserGrowthChart, 
-  TopProductsChart 
+import { Copy } from 'lucide-react';
+import {
+  LogOut,
+  Bell,
+  LayoutDashboard,
+  ShoppingCart,
+  Users,
+  Store,
+  Eye,
+} from 'lucide-react';
+
+import {
+  DailyTransactionChart,
+  MonthlyTrendChart,
+  UserGrowthChart,
+  TopProductsChart,
 } from '@/components/AdminCharts';
 
 enum OrderStatus {
@@ -67,11 +77,23 @@ interface StoreWithOrders extends Store {
   orders: Order[];
 }
 
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  phone?: string;
+  address?: string;
+  createdAt: string;
+  ordersCount: number;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
+
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [stores, setStores] = useState<StoreWithOrders[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewingDetails, setIsViewingDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,80 +101,194 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [selectedStatus, setSelectedStatus] = useState('');
+
+  const [farmers, setFarmers] = useState<{ id: string; name: string; image: string; description: string; rating: number }[]>([]);
+  const [farmerLoading, setFarmerLoading] = useState(true);
+  const [farmerError, setFarmerError] = useState<string | null>(null);
+  const [farmerPage, setFarmerPage] = useState(1);
+  const farmersPerPage = 8;
+
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerLoading, setCustomerLoading] = useState(true);
+  const [customerError, setCustomerError] = useState<string | null>(null);
+  const [customerPage, setCustomerPage] = useState(1);
+  const customersPerPage = 10;
+  const totalCustomerPages = Math.ceil(customers.length / customersPerPage);
+  const [editingField, setEditingField] = useState<{ id: string; field: string } | null>(null);
+
+  // 更新本地状态
+  const updateCustomerField = (index: number, field: string, value: any) => {
+    setCustomers((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  // 自动保存字段（失焦时触发）
+  const saveField = async (id: string, updateData: Partial<Customer>) => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const res = await fetch(`http://localhost:5001/api/users/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      if (!res.ok) throw new Error('Failed to save');
+      console.log(`✅ Field saved for user ${id}`);
+    } catch (err) {
+      console.error('❌ Save failed:', err);
+      alert('Failed to save changes');
+    }
+  };
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+    if (!token || !userStr) return router.push('/login-page?mode=admin');
+
+    try {
+      const user = JSON.parse(userStr);
+      if (user.role !== 'ADMIN') router.push('/login-page?mode=admin');
+    } catch {
+      router.push('/login-page?mode=admin');
+    }
+  }, [router]);
 
   useEffect(() => {
-    if (activeTab === 'orders') {
-      fetchStoresWithOrders();
-    }
-  }, [activeTab, currentPage]);
+    if (activeTab === 'orders') fetchOrders();
+    if (activeTab === 'customer') fetchCustomers();
+  }, [activeTab, currentPage, selectedStatus]);
 
-  const fetchStoresWithOrders = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/orders?page=${currentPage}&limit=${itemsPerPage}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch orders');
-      }
-      
-      const data = await response.json();
-      if (!data.orders) {
-        throw new Error('Invalid response format');
-      }
-      
-      // 按商店对订单进行分组
-      const storeMap = new Map<string, StoreWithOrders>();
-      
-      data.orders.forEach((order: Order) => {
-        order.items.forEach(item => {
-          const store = item.product.store;
-          if (!storeMap.has(store.id)) {
-            storeMap.set(store.id, {
-              id: store.id,
-              name: store.name,
-              description: '',
-              ownerId: '', // 由于后端API没有返回这些信息，我们设置默认值
-              owner: {
-                id: '',
-                name: store.name,
-                email: ''
-              },
-              orders: []
-            } as StoreWithOrders);
-          }
-          
-          const storeData = storeMap.get(store.id)!;
-          if (!storeData.orders.find(o => o.id === order.id)) {
-            storeData.orders.push(order);
-          }
+    const fetchOrders = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) throw new Error('Token not found');
+    
+        const url = `http://localhost:5001/api/orders?page=${currentPage}&limit=${itemsPerPage}${selectedStatus ? `&status=${selectedStatus}` : ''}`;
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-      });
-      
-      setStores(Array.from(storeMap.values()));
-      setTotalPages(data.pagination.pages);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      setError('Failed to load orders. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    
+        if (!response.ok) throw new Error(await response.text());
+    
+        const data = await response.json();
+    
+        setOrders(data.orders);
+        setTotalPages(data.pagination.pages);
+      } catch (err: any) {
+        console.error('Error fetching orders:', err);
+        setError(err.message || 'Failed to fetch orders');
+      } finally {
+        setIsLoading(false);
+      }
+    };  
 
-  const handleViewOrder = (order: Order) => {
-    setSelectedOrder(order);
-    setIsViewingDetails(true);
-  };
+    const fetchOrderDetails = async (orderId: string) => {
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`http://localhost:5001/api/orders/${orderId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch order details');
+        const data = await res.json();
+        setSelectedOrder(data);
+        setIsViewingDetails(true);
+      } catch (error) {
+        console.error('Error loading order detail:', error);
+      }
+    };
+    const fetchCustomers = async () => {
+      setCustomerLoading(true);
+      setCustomerError(null);
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`http://localhost:5001/api/users?role=CUSTOMER`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+    
+        if (!res.ok) throw new Error('Failed to fetch customers');
+        const data = await res.json();
+    
+        // 👇 为每个客户获取订单数（调用 /users/:id）
+        const enrichedCustomers = await Promise.all(data
+          .filter((user: any) => user.role === 'CUSTOMER') 
+          .map(async (customer: any) => {
+          try {
+            const detailRes = await fetch(`http://localhost:5001/api/users/${customer.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!detailRes.ok) throw new Error();
+            const detail = await detailRes.json();
+            return {
+              ...customer,
+              ordersCount: Array.isArray(detail.orders) ? detail.orders.length : 0,
+            };
+          } catch {
+            return { ...customer, ordersCount: 0 };
+          }
+        }));
+    
+        setCustomers(enrichedCustomers);
+      } catch (err: any) {
+        console.error('Error fetching customers:', err);
+        setCustomerError(err.message);
+      } finally {
+        setCustomerLoading(false);
+      }
+    };    
 
-  const handleBackToList = () => {
-    setSelectedOrder(null);
-    setIsViewingDetails(false);
-  };
+    useEffect(() => {
+      if (activeTab === 'farmer') {
+        const fetchFarmers = async () => {
+          try {
+            setFarmerLoading(true);
+            setFarmerError(null);
+            const response = await fetch("http://localhost:5001/api/stores");
+            const data = await response.json();
+    
+            if (!Array.isArray(data)) {
+              throw new Error("API did not return an array");
+            }
+    
+            const formatted = data.map(store => ({
+              id: store.owner?.id || "unknown",
+              name: store.owner?.name || "Unknown Farmer",
+              image: store.imageUrl || "/farmer1.jpg",
+              description: store.description || "No description available",
+              rating: store.rating || 0
+            }));
+    
+            setFarmers(formatted);
+          } catch (error) {
+            console.error("Failed to fetch farmers:", error);
+            setFarmerError("Failed to load farmers");
+          } finally {
+            setFarmerLoading(false);
+          }
+        };
+    
+        fetchFarmers();
+      }
+    }, [activeTab]);    
 
-  const handleLogout = () => {
-    logout();
-    router.push('/login-page');
-  };
+    const handleViewOrder = (order: Order) => fetchOrderDetails(order.id);
+    const handleBackToList = () => { setSelectedOrder(null); setIsViewingDetails(false); };
+    const handleLogout = () => {
+      logout?.();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      router.push('/login-page?mode=admin');
+    };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -274,15 +410,28 @@ export default function AdminDashboard() {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold">Order Management</h2>
                 {isViewingDetails && (
-                  <Button
-                    variant="outline"
-                    onClick={handleBackToList}
-                    className="flex items-center space-x-2"
-                  >
-                    Back to List
-                  </Button>
+                  <Button variant="outline" onClick={handleBackToList}>Back to List</Button>
                 )}
               </div>
+
+              {!isViewingDetails && (
+                <div className="mb-4">
+                  <label className="text-sm mr-2">Filter by Status:</label>
+                  <select
+                    className="border px-3 py-1 rounded text-sm"
+                    value={selectedStatus}
+                    onChange={(e) => {
+                      setSelectedStatus(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value="">All</option>
+                    {Object.values(OrderStatus).map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {isLoading ? (
                 <div className="flex justify-center items-center h-64">
@@ -291,131 +440,76 @@ export default function AdminDashboard() {
               ) : error ? (
                 <div className="text-center text-red-600 py-8">
                   {error}
-                  <Button
-                    variant="outline"
-                    onClick={fetchStoresWithOrders}
-                    className="mt-4"
-                  >
-                    Try Again
-                  </Button>
+                  <Button variant="outline" onClick={fetchOrders} className="mt-4">Try Again</Button>
                 </div>
               ) : !isViewingDetails ? (
-                stores.length > 0 ? (
-                  <div className="space-y-8">
-                    {stores.map((store) => (
-                      <div key={store.id} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold">{store.name}</h3>
-                          <span className="text-sm text-gray-500">Owner: {store.owner.name}</span>
-                        </div>
-                        {store.orders && store.orders.length > 0 ? (
-                          <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                              <thead className="bg-gray-50">
-                                <tr>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Order ID
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Customer
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Date
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Total
-                                  </th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="bg-white divide-y divide-gray-200">
-                                {store.orders.map((order) => (
-                                  <tr key={order.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                      {order.id}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                      {order.customer.name}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                      {new Date(order.createdAt).toLocaleString()}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        ${order.status === OrderStatus.COMPLETED ? 'bg-green-100 text-green-800' : 
-                                          order.status === OrderStatus.PENDING ? 'bg-yellow-100 text-yellow-800' : 
-                                          order.status === OrderStatus.CANCELLED ? 'bg-red-100 text-red-800' :
-                                          order.status === OrderStatus.DELIVERED ? 'bg-blue-100 text-blue-800' :
-                                          'bg-gray-100 text-gray-800'}`}>
-                                        {order.status}
-                                      </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                      ${order.totalAmount.toFixed(2)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleViewOrder(order)}
-                                        className="text-green-600 hover:text-green-900"
-                                      >
-                                        <Eye className="h-4 w-4 mr-1" />
-                                        View
-                                      </Button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        ) : (
-                          <p className="text-gray-500 text-center py-4">No orders for this store</p>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {/* Pagination controls */}
-                    <div className="mt-4 flex justify-center">
-                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <button
-                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                          disabled={currentPage === 1}
-                          className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                            currentPage === 1
-                              ? 'text-gray-300 cursor-not-allowed'
-                              : 'text-gray-500 hover:bg-gray-50'
-                          }`}
-                        >
-                          Previous
-                        </button>
-                        <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                          Page {currentPage} of {totalPages}
-                        </span>
-                        <button
-                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                          disabled={currentPage === totalPages}
-                          className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                            currentPage === totalPages
-                              ? 'text-gray-300 cursor-not-allowed'
-                              : 'text-gray-500 hover:bg-gray-50'
-                          }`}
-                        >
-                          Next
-                        </button>
-                      </nav>
-                    </div>
+                <div>
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {orders.map((order) => (
+                        <tr key={order.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{order.id}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{order.customer.name}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{new Date(order.createdAt).toLocaleString()}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                              ${order.status === OrderStatus.COMPLETED ? 'bg-green-100 text-green-800' :
+                                order.status === OrderStatus.PENDING ? 'bg-yellow-100 text-yellow-800' :
+                                order.status === OrderStatus.CANCELLED ? 'bg-red-100 text-red-800' :
+                                order.status === OrderStatus.DELIVERED ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'}`}>
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">${order.totalAmount.toFixed(2)}</td>
+                          <td className="px-6 py-4 text-sm font-medium">
+                            <Button variant="ghost" size="sm" onClick={() => handleViewOrder(order)} className="text-green-600 hover:text-green-900">
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Pagination */}
+                  <div className="mt-4 flex justify-center">
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                          currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        Previous
+                      </button>
+                      <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                          currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        Next
+                      </button>
+                    </nav>
                   </div>
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    No stores found
-                  </div>
-                )
+                </div>
               ) : (
                 selectedOrder && (
                   <div className="space-y-6">
@@ -425,12 +519,8 @@ export default function AdminDashboard() {
                         <p className="text-sm text-gray-600">Order ID: {selectedOrder.id}</p>
                         <p className="text-sm text-gray-600">Customer: {selectedOrder.customer.name}</p>
                         <p className="text-sm text-gray-600">Email: {selectedOrder.customer.email}</p>
-                        <p className="text-sm text-gray-600">
-                          Created: {new Date(selectedOrder.createdAt).toLocaleString()}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Updated: {new Date(selectedOrder.updatedAt).toLocaleString()}
-                        </p>
+                        <p className="text-sm text-gray-600">Created: {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                        <p className="text-sm text-gray-600">Updated: {new Date(selectedOrder.updatedAt).toLocaleString()}</p>
                         <p className="text-sm text-gray-600">Status: {selectedOrder.status}</p>
                       </div>
                     </div>
@@ -440,41 +530,21 @@ export default function AdminDashboard() {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Product
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Store
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Quantity
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Price
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Subtotal
-                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Store</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subtotal</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {selectedOrder.items.map((item) => (
                             <tr key={item.id}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {item.product.name}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-500">
-                                {item.product.store.name}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {item.quantity}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                ${item.product.price.toFixed(2)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                ${(item.quantity * item.product.price).toFixed(2)}
-                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">{item.product.name}</td>
+                              <td className="px-6 py-4 text-sm text-gray-500">{item.product.store.name}</td>
+                              <td className="px-6 py-4 text-sm text-gray-500">{item.quantity}</td>
+                              <td className="px-6 py-4 text-sm text-gray-500">${item.price.toFixed(2)}</td>
+                              <td className="px-6 py-4 text-sm text-gray-500">${(item.price * item.quantity).toFixed(2)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -483,7 +553,7 @@ export default function AdminDashboard() {
                             <td colSpan={4} className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
                               Total:
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
                               ${selectedOrder.totalAmount.toFixed(2)}
                             </td>
                           </tr>
@@ -496,17 +566,247 @@ export default function AdminDashboard() {
             </div>
           )}
 
+
           {activeTab === 'farmer' && (
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h2 className="text-xl font-bold mb-4">Farmer Management</h2>
-              {/* Farmer management content will be implemented here */}
+              <h2 className="text-xl font-bold mb-6">Farmer Management</h2>
+
+              {farmerLoading ? (
+                <div className="text-center text-gray-500">Loading farmers...</div>
+              ) : farmerError ? (
+                <div className="text-center text-red-500">{farmerError}</div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {farmers
+                      .slice((farmerPage - 1) * farmersPerPage, farmerPage * farmersPerPage)
+                      .map((farmer) => (
+                        <div key={farmer.id} className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition">
+                          <div className="relative h-40 mb-4">
+                            <img
+                              src={farmer.image}
+                              alt={farmer.name}
+                              className="w-full h-full object-cover rounded"
+                            />
+                          </div>
+                          <h3 className="text-lg font-semibold">{farmer.name}</h3>
+                          <p className="text-sm text-gray-500 line-clamp-2 mb-2">{farmer.description}</p>
+                          <div className="flex justify-between items-center">
+                            <span className="text-yellow-500 font-medium">★ {farmer.rating.toFixed(1)}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push(`/farmer-page/${encodeURIComponent(farmer.id)}`)}
+                            >
+                              View
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {Math.ceil(farmers.length / farmersPerPage) > 1 && (
+                    <div className="mt-6 flex justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setFarmerPage((p) => Math.max(p - 1, 1))}
+                        disabled={farmerPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      {Array.from({ length: Math.ceil(farmers.length / farmersPerPage) }, (_, i) => (
+                        <Button
+                          key={i}
+                          variant={farmerPage === i + 1 ? "default" : "outline"}
+                          onClick={() => setFarmerPage(i + 1)}
+                        >
+                          {i + 1}
+                        </Button>
+                      ))}
+                      <Button
+                        variant="outline"
+                        onClick={() => setFarmerPage((p) => Math.min(p + 1, Math.ceil(farmers.length / farmersPerPage)))}
+                        disabled={farmerPage === Math.ceil(farmers.length / farmersPerPage)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
           {activeTab === 'customer' && (
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h2 className="text-xl font-bold mb-4">Customer Management</h2>
-              {/* Customer management content will be implemented here */}
+
+              {customerLoading ? (
+                <p className="text-center text-gray-500">Loading customers...</p>
+              ) : customerError ? (
+                <p className="text-center text-red-500">{customerError}</p>
+              ) : (
+                <>
+                  <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Password</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                    </tr>
+                  </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {customers
+                        .slice((customerPage - 1) * customersPerPage, customerPage * customersPerPage)
+                        .map((customer, index) => (
+                          <tr key={customer.id}>
+                            {/* ID */}
+                            <td className="px-6 py-4 text-sm text-gray-500 flex items-center gap-2">
+                              <span>{customer.id}</span>
+                              <button
+                                onClick={() => navigator.clipboard.writeText(customer.id)}
+                                className="text-gray-400 hover:text-gray-600"
+                                title="Copy ID"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </td>
+
+                            {/* Name */}
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {editingField?.id === customer.id && editingField.field === 'name' ? (
+                                <input
+                                  className="w-full text-sm border p-1"
+                                  autoFocus
+                                  value={customer.name}
+                                  onChange={(e) => updateCustomerField(index, 'name', e.target.value)}
+                                  onBlur={() => {
+                                    saveField(customer.id, { name: customer.name });
+                                    setEditingField(null);
+                                  }}
+                                />
+                              ) : (
+                                <span onClick={() => setEditingField({ id: customer.id, field: 'name' })} className="cursor-pointer hover:underline">
+                                  {customer.name}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Email */}
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {editingField?.id === customer.id && editingField.field === 'email' ? (
+                                <input
+                                  className="w-full text-sm border p-1"
+                                  value={customer.email}
+                                  onChange={(e) => updateCustomerField(index, 'email', e.target.value)}
+                                  onBlur={() => {
+                                    saveField(customer.id, { email: customer.email });
+                                    setEditingField(null);
+                                  }}
+                                />
+                              ) : (
+                                <span onClick={() => setEditingField({ id: customer.id, field: 'email' })} className="cursor-pointer hover:underline">
+                                  {customer.email}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Password */}
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {editingField?.id === customer.id && editingField.field === 'password' ? (
+                                <input
+                                  className="w-full text-sm border p-1"
+                                  value={customer.password || ''}
+                                  type="text"
+                                  placeholder="Enter new password"
+                                  onChange={(e) => updateCustomerField(index, 'password', e.target.value)}
+                                  onBlur={() => {
+                                    saveField(customer.id, { password: customer.password });
+                                    setEditingField(null);
+                                  }}
+                                />
+                              ) : (
+                                <span
+                                  onClick={() => setEditingField({ id: customer.id, field: 'password' })}
+                                  className="cursor-pointer hover:underline text-blue-600"
+                                >
+                                  Set Password
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Phone */}
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {editingField?.id === customer.id && editingField.field === 'phone' ? (
+                                <input
+                                  className="w-full text-sm border p-1"
+                                  value={customer.phone}
+                                  onChange={(e) => updateCustomerField(index, 'phone', e.target.value)}
+                                  onBlur={() => {
+                                    saveField(customer.id, { phone: customer.phone });
+                                    setEditingField(null);
+                                  }}
+                                />
+                              ) : (
+                                <span onClick={() => setEditingField({ id: customer.id, field: 'phone' })} className="cursor-pointer hover:underline">
+                                  {customer.phone}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Address */}
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {editingField?.id === customer.id && editingField.field === 'address' ? (
+                                <input
+                                  className="w-full text-sm border p-1"
+                                  value={customer.address}
+                                  onChange={(e) => updateCustomerField(index, 'address', e.target.value)}
+                                  onBlur={() => {
+                                    saveField(customer.id, { address: customer.address });
+                                    setEditingField(null);
+                                  }}
+                                />
+                              ) : (
+                                <span onClick={() => setEditingField({ id: customer.id, field: 'address' })} className="cursor-pointer hover:underline">
+                                  {customer.address}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {new Date(customer.createdAt).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+
+                  {/* Pagination Controls */}
+                  <div className="flex justify-center mt-4 space-x-2">
+                    <Button
+                      variant="outline"
+                      disabled={customerPage === 1}
+                      onClick={() => setCustomerPage(p => Math.max(p - 1, 1))}
+                    >
+                      Previous
+                    </Button>
+                    <span className="px-4 py-2 text-sm text-gray-600">
+                      Page {customerPage} of {totalCustomerPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      disabled={customerPage === totalCustomerPages}
+                      onClick={() => setCustomerPage(p => Math.min(p + 1, totalCustomerPages))}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </main>

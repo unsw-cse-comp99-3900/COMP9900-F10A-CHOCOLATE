@@ -191,9 +191,9 @@ router.post('/login', async (req, res) => {
     }
 
     // check role
-    if (user.role.toUpperCase() !== role.toUpperCase()) {
+    if (user.role !== role) {
       console.log(` Role mismatch! Registered as '${user.role}', attempted login as '${role}'`);
-      return res.status(400).json({ 
+      return res.status(403).json({ 
         message: `This account is registered as '${user.role}', not '${role}'`
       });
     }

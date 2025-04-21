@@ -1,24 +1,51 @@
+# Farmers Market Project
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-First, run the development server:
+### Starting the Backend Server
+
+First, start the backend server:
 
 ```bash
+cd backend
+npm install
+node server.js
+```
+
+The backend server will run on [http://localhost:5001](http://localhost:5001)
+
+### Starting the Frontend Server
+
+In a new terminal, run the development server:
+
+```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Admin Account Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To set up and use the admin account:
+
+1. Create the admin account (only needs to be done once):
+```bash
+curl -X POST http://localhost:5001/api/admin/setup
+```
+
+2. Login with the following credentials:
+- Email: `admin@farmersmarket.com`
+- Password: `admin123`
+- Role: Select `ADMIN` from the dropdown
+
+The admin account has full access to:
+- View and manage all users (farmers and customers)
+- View and manage all stores
+- View and manage all products
+- View and manage all orders
 
 ## Learn More
 
@@ -26,8 +53,6 @@ To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
 ## Deploy on Vercel
 
