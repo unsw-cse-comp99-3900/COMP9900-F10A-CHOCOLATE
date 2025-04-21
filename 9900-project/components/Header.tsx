@@ -507,11 +507,7 @@ const Header = () => {
               )}
             </li>
             
-            <li className="py-2 px-4">
-              <Link href="/AboutUs" className="font-semibold hover:text-gray-300 transition-colors block">
-                CONTACT US
-              </Link>
-            </li>
+           
           </ul>
         </div>
 
@@ -585,9 +581,6 @@ const Header = () => {
               </div>
             </div>
             
-            <Link href="/AboutUs" className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2">
-              CONTACT US
-            </Link>
           </div>
         </div>
       </nav>
