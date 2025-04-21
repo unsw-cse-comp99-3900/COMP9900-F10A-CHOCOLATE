@@ -112,6 +112,10 @@ const Header = () => {
     setCartSlideOpen(!cartSlideOpen);
   };
 
+  if (isLoggedIn && user?.role === "ADMIN") {
+    return null;
+  }
+
   return (
     <header className="w-full">
       {/* Top header section */}
