@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+  frontend:
+    build:
+      context: .     # Path to the Next.js application
+      dockerfile: Dockerfile.frontend   # Path to the Dockerfile relative to context
+    container_name: frontend
+    ports:
+      - '3000:3000'              # Expose frontend on localhost:3000
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:5001" # Point to backend service
+    depends_on:
+      - backend
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend       # Path to the folder with your backend Dockerfile

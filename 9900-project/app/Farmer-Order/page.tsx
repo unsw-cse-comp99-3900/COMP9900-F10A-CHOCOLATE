@@ -291,7 +291,7 @@ export default function FarmerOrder() {
                                     <span className="text-gray-700">{order.id}</span>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <div>
+        <div>
                                         <span className="font-medium">Date: </span>
                                         <span className="text-gray-700">{formatDate(order.createdAt)}</span>
                                     </div>
