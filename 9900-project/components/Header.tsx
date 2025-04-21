@@ -111,7 +111,6 @@ const Header = () => {
   const toggleCartSlide = () => {
     setCartSlideOpen(!cartSlideOpen);
   };
-  if (user?.role === "ADMIN") return null;
 
   return (
     <header className="w-full">
