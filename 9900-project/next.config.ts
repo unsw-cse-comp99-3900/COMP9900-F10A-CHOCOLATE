@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   images: {
     domains: [
       "source.unsplash.com", 
@@ -9,7 +10,7 @@ const nextConfig: NextConfig = {
       "ftcdn.net",
       "images.unsplash.com",
       "plus.unsplash.com"
-    ], // Allow external image domains
+    ],
   },
 };
 

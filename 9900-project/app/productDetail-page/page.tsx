@@ -9,8 +9,9 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
 import CartSlide from "@/components/CartSlide";
+import { Suspense } from "react";
 
-export default function ProductDetailPage() {
+function ProductDetailContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const router = useRouter();
@@ -216,5 +217,13 @@ export default function ProductDetailPage() {
       {/* Shopping Cart Slide */}
       <CartSlide isOpen={cartSlideOpen} onClose={() => setCartSlideOpen(false)} />
     </div>
+  );
+}
+
+export default function ProductDetailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProductDetailContent />
+    </Suspense>
   );
 }

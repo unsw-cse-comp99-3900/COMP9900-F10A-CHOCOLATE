@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -31,7 +31,8 @@ interface Store {
   products: Product[];
 }
 
-export default function SearchPage() {
+// Create a separate component for the search functionality
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get('q') || '';
@@ -238,5 +239,14 @@ export default function SearchPage() {
         </>
       )}
     </div>
+  );
+}
+
+// Main page component
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 } 
