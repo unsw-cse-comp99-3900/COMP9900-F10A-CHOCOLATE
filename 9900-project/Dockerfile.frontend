@@ -1,24 +1,39 @@
-# syntax=docker.io/docker/dockerfile:1
-
-FROM node:20-alpine
-
+# Install dependencies only when needed
+FROM node:18-alpine AS deps
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Install required packages for node-gyp if needed (optional)
+# RUN apk add --no-cache python3 make g++
 
-# Install dependencies
-RUN npm install
+COPY package.json package-lock.json* pnpm-lock.yaml* bun.lockb* ./
 
-# Copy source files
+# Install dependencies (you can switch to yarn or pnpm if needed)
+RUN npm ci
+
+# Rebuild the source code only when needed
+FROM node:18-alpine AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Expose the port
+# Build the app
+RUN npm run build
+
+# Production image
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+# Optional: reduce image size
+ENV NODE_ENV production
+
+# Copy only necessary files
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
 EXPOSE 3000
 
-# Set the environment variable to listen on all interfaces
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-# Start the development server
-CMD ["npm", "run", "dev"]
+# Use Next.js built-in server
+CMD ["npm", "start"]
