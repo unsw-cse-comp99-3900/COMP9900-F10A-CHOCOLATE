@@ -1,7 +1,9 @@
 import { useRouter } from 'next/navigation';
 
 export async function handleRedirectAfterAuth(user: any, router: any) {
-  if (user.role === 'CUSTOMER') {
+  if (user.role === 'ADMIN') {
+    router.push('/admin');
+  } else if (user.role === 'CUSTOMER') {
     router.push('/');
   } else if (user.role === 'FARMER') {
     try {
@@ -22,3 +24,4 @@ export async function handleRedirectAfterAuth(user: any, router: any) {
     router.push('/');
   }
 }
+

@@ -244,7 +244,7 @@ export default function FarmerOrder() {
     );
 
     return (
-        <div className="p-6 max-w-6xl mx-auto max-h-screen">
+        <div className="p-6 max-w-6xl mx-auto overflow-y-auto">
             <div className="flex justify-center items-center mb-6">
                 <h1 className="text-2xl font-bold">Your Orders</h1>
             </div>

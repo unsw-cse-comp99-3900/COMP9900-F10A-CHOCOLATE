@@ -13,31 +13,27 @@ export default function Home() {
       try {
         const response = await fetch("http://localhost:5001/api/stores");
         const data = await response.json();
-  
-        console.log("Fetched farmers data:", data); 
-  
+
         if (!Array.isArray(data)) {
           throw new Error("API did not return an array");
         }
-  
-        // 修正前端数据映射
+
         const formattedFarmers = data.slice(0, 4).map(store => ({
-          id: store.owner?.id || "unknown", 
-          name: store.owner?.name || "Unknown Farmer", 
-          image: store.imageUrl || "/farmer1.jpg", 
-          description: store.description || "No description available" 
+          id: store.owner?.id || "unknown",
+          name: store.owner?.name || "Unknown Farmer",
+          image: store.imageUrl || "/farmer1.jpg",
+          description: store.description || "No description available"
         }));
-  
+
         setFarmers(formattedFarmers);
       } catch (error) {
         console.error("Failed to fetch farmers:", error);
       }
     }
-  
+
     fetchFarmers();
   }, []);
 
-  // 处理 hash 滚动
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
@@ -56,20 +52,20 @@ export default function Home() {
       {/* Banner Section */}
       <header id="home" className="relative text-center py-20 h-[700px] flex flex-col items-center justify-center shadow-lg overflow-hidden w-full">
         <div className="absolute inset-0 w-full h-full">
-        <Image
-          src="/main-banner-background-small.jpg"
-          alt="Fresh Food Market"
-          fill                 
-          priority            
-          className="block lg:hidden object-cover"       
-        />
-        <Image
-          src="/main-banner-background-large.jpg"
-          alt="Fresh Food Market"
-          fill
-          priority
-          className="hidden lg:block object-cover"
-        />
+          <Image
+            src="/main-banner-background-small.jpg"
+            alt="Fresh Food Market"
+            fill
+            priority
+            className="block lg:hidden object-cover"
+          />
+          <Image
+            src="/main-banner-background-large.jpg"
+            alt="Fresh Food Market"
+            fill
+            priority
+            className="hidden lg:block object-cover"
+          />
         </div>
         <div className="relative z-10 text-white text-center px-6 md:px-12 bg-transparent">
           <h1 className="text-6xl font-extrabold drop-shadow-lg">Your Local <br /> FRESH FOOD MARKET</h1>
@@ -83,14 +79,12 @@ export default function Home() {
       <section id="categories" className="text-center mt-20 px-16 max-w-screen-xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center justify-center">
-            {/* left line */}
             <div className="hidden sm:block w-24 h-px bg-gray-600 transform -rotate-3 translate-y-1" />
             <h2 className="mx-4 text-4xl font-extrabold tracking-wide">Categories</h2>
-            {/* right line */}
             <div className="hidden sm:block w-24 h-px bg-gray-600 transform rotate-3 translate-y-1" />
           </div>
           <p className="mt-4 text-gray-600">
-            Explore our award-winning range of fresh fruit, vegetables, wheat, suger cane <br className="hidden md:block"/>
+            Explore our award-winning range of fresh fruit, vegetables, wheat, sugar cane <br className="hidden md:block" />
             and lentils and more.
           </p>
         </div>
@@ -153,12 +147,14 @@ export default function Home() {
             <div className="hidden sm:block w-24 h-px bg-gray-600 transform rotate-3 translate-y-1" />
           </div>
           <p className="mt-4 text-gray-600">
-            Meet our top farmers, dedicated to bringing you the freshest, highest-quality produce <br className="hidden md:block"/>
+            Meet our top farmers, dedicated to bringing you the freshest, highest-quality produce <br className="hidden md:block" />
             straight from the farm.
           </p>
+          <Link href="/farmers-list" className="inline-block mt-2 text-blue-600 hover:text-blue-800 transition-colors">
+            View All Farmers →
+          </Link>
         </div>
 
-        {/* 如果 farmers 为空，显示 "Loading..." */}
         {farmers.length === 0 ? (
           <p className="text-gray-500">Loading farmers...</p>
         ) : (

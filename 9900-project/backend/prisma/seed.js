@@ -1,5 +1,8 @@
 <<<<<<< HEAD
+=======
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> yuchen-branch
 const { PrismaClient, UserRole, OrderStatus, ProductCategory } = require("@prisma/client");
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
@@ -183,6 +186,8 @@ main()
   })
   .finally(() => {
     prisma.$disconnect();
+<<<<<<< HEAD
+=======
 =======
 =======
 require('dotenv').config({ path: __dirname + '/../.env' }); 
@@ -275,4 +280,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
 >>>>>>> origin/boxing
+>>>>>>> yuchen-branch
   });

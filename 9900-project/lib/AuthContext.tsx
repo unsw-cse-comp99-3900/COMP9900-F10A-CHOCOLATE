@@ -57,6 +57,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = (userData: User, token: string) => {
     setUser(userData);
     setIsLoggedIn(true);
+    
+    // Store user data and token in localStorage
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', token);
   };
 
   const logout = () => {

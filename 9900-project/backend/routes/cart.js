@@ -7,7 +7,6 @@ const router = express.Router();
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
-
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -26,6 +25,7 @@ const authenticateToken = (req, res, next) => {
 
 /**
  * 🔹 Get current user's cart (GET /api/cart)
+ * Only customers can access their own cart
  */
 router.get('/', authenticateToken, async (req, res) => {
   if (req.user.role !== 'CUSTOMER') {
@@ -56,6 +56,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
 /**
  * 🔹 Add product to cart (POST /api/cart)
+ * Only customers can add items to cart
  */
 router.post('/', authenticateToken, async (req, res) => {
   if (req.user.role !== 'CUSTOMER') {
@@ -102,6 +103,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
 /**
  * 🔹 Remove product from cart (DELETE /api/cart/:id)
+ * Only customers can delete their own cart items
  */
 router.delete('/:id', authenticateToken, async (req, res) => {
   if (req.user.role !== 'CUSTOMER') {
