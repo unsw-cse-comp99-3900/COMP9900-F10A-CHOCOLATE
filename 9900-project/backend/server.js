@@ -9,8 +9,8 @@ const storeRoutes = require('./routes/stores');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const cartRoutes = require('./routes/cart');
+const uploadRoutes = require('./routes/upload');
 const adminRoutes = require('./routes/admin');
-// const uploadRoutes = require('./routes/middleware/upload');
 
 const app = express();
 
@@ -20,7 +20,7 @@ app.use(cors());
 
 // API route registration
 app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
-// app.use('/api', uploadRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/products', productRoutes);

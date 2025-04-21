@@ -110,7 +110,7 @@ export default function FarmerPage({ params }: { params: Promise<{ slug: string 
         <div className="bg-white p-6 shadow rounded-lg mb-10">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
             <div className="w-64 h-64 relative rounded-lg overflow-hidden">
-              <img src={farmer.image} alt={farmer.name} className="object-cover w-full h-full" />
+              <img src={farmer.imageUrl || '/store-placeholder.jpg'}  alt={farmer.name} className="object-cover w-full h-full" />
             </div>
             <div className="flex-1 space-y-4">
               <h2 className="text-4xl font-extrabold text-gray-900">{farmer.name}</h2>

@@ -89,31 +89,52 @@ export default function Home() {
           </p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-6 mt-8">
-          {[
-            { name: 'Fruit', image: '/fruit.jpg' },
-            { name: 'Veggie', image: '/veggie.jpg' },
-            { name: 'Wheat', image: '/wheat.jpg' },
-            { name: 'Sugar cane', image: '/sugar-cane.jpg' },
-            { name: 'Lentils', image: '/lentils.jpg' }
-          ].map((category) => (
-            <div key={category.name} className="relative h-64 overflow-hidden rounded-lg shadow-lg col-span-1">
-              <Link href={`/product-page/${category.name}`} className="group relative h-64 block overflow-hidden rounded-lg shadow-lg">
-                <Image
-                  src={category.image}
-                  alt={category.name}
-                  fill
-                  className="object-cover group-hover:scale-110 transition"
-                  sizes="100vw"
-                />
-                <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
-                  <h3 className="text-5xl font-bold">{category.name}</h3>
-                  <Button className="mt-4 bg-white/70 text-black px-4 py-2 rounded-md shadow-md hover:bg-white/80 transition cursor-pointer">
-                    SHOP NOW
-                  </Button>
-                </div>
-              </Link>
-            </div>
-          ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 col-span-2">
+            {[{ name: 'Fruit', image: '/fruit.jpg' },
+              { name: 'Veggie', image: '/veggie.jpg' },
+              { name: 'Wheat', image: '/wheat.jpg' },
+              { name: 'Sugar_cane', image: '/sugar-cane.jpg' }
+            ].map((category) => (
+              <div key={category.name} className="relative h-64 overflow-hidden rounded-lg shadow-lg">
+                <Link href={`/product-page/${category.name}`} className="group relative h-64 block overflow-hidden rounded-lg shadow-lg">
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    fill
+                    className="object-cover group-hover:scale-110 transition"
+                    sizes="100vw"
+                  />
+                  <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
+                    <h3 className="text-5xl font-bold">{category.name}</h3>
+                    <Button className="mt-4 bg-white/70 text-black px-4 py-2 rounded-md shadow-md hover:bg-white/80 transition cursor-pointer">
+                      SHOP NOW
+                    </Button>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 col-span-2">
+            {[{ name: 'Lentils', image: '/lentils.jpg' }].map((category) => (
+              <div key={category.name} className="relative h-64 overflow-hidden rounded-lg shadow-lg col-span-2">
+                <Link href={`/product-page/${category.name}`} className="group relative h-64 block overflow-hidden rounded-lg shadow-lg">
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    fill
+                    className="object-cover group-hover:scale-110 transition"
+                    sizes="100vw"
+                  />
+                  <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
+                    <h3 className="text-5xl font-bold">{category.name}</h3>
+                    <Button className="mt-4 bg-white/70 text-black px-4 py-2 rounded-md shadow-md hover:bg-white/80 transition cursor-pointer">
+                      SHOP NOW
+                    </Button>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

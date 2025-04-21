@@ -88,12 +88,28 @@ export default function LoginPage() {
       if (response.ok) {
         setLoginSuccess(true);
         login(data.user, data.token);
+        
+        // Store token and user data
+        if (rememberMe) {
+          // Store in localStorage for persistent login
+          console.log("Storing in localStorage - User data:", data.user);
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          console.log("Verification - localStorage user after setting:", localStorage.getItem('user'));
+        } else {
+          // Store in sessionStorage for session-only login
+          console.log("Storing in sessionStorage - User data:", data.user);
+          sessionStorage.setItem('token', data.token);
+          sessionStorage.setItem('user', JSON.stringify(data.user));
+          console.log("Verification - sessionStorage user after setting:", sessionStorage.getItem('user'));
+        }
 
-        const storage = rememberMe ? localStorage : sessionStorage;
-        storage.setItem('token', data.token);
-        storage.setItem('user', JSON.stringify(data.user));
-
+        console.log("Storage type being used:", rememberMe ? "localStorage" : "sessionStorage");
+        
+        // Redirect to home page after successful login
         setTimeout(() => {
+          const storedUser = rememberMe ? localStorage.getItem('user') : sessionStorage.getItem('user');
+          console.log("User data before redirect:", storedUser);
           handleRedirectAfterAuth(data.user, router);
         }, 1500);
       } else {
@@ -124,9 +140,11 @@ export default function LoginPage() {
           </div>
 
           {invalidCredentials && (
-            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              <span>Invalid credentials. Please check your email, password, and account type.</span>
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex flex-col items-center">
+              <div className="flex items-center mb-2">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                <span className="font-medium">Invalid account information! Please check your email, password and account type.</span>
+              </div>
             </div>
           )}
 

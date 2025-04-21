@@ -317,7 +317,7 @@ export default function EditProfile() {
     <div className="flex flex-col items-center justify-center min-h-screen py-10">
       <div className="w-full max-w-[90%] md:max-w-[80%] lg:max-w-[70%] xl:max-w-[60%]">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Edit Profile</h1>
+          <h1 className="text-3xl font-bold">Your Profile</h1>
           <p className="text-gray-600">Update your personal information</p>
         </div>
 

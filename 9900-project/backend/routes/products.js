@@ -164,10 +164,16 @@ router.get('/:id', async (req, res) => {
  * 🔹 Create a product (POST /api/products)
  * Requires store owner permission
  */
-  router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
-    try{
-    const { storeId, name, description, price, quantity, category } = req.body;
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
+  try{
+    const { storeId, name, description, price, quantity, category, imageUrl: imageUrlFromBody } = req.body;
+    
+    // If image was uploaded directly, use that, otherwise use the imageUrl from the request body
+    const imageUrl = req.file 
+      ? `/uploads/${req.file.filename}` 
+      : imageUrlFromBody || null;
+    
+    console.log("Creating product with imageUrl:", imageUrl);
 
     if (!storeId || !name || price === undefined) {
       return res.status(400).json({ message: 'Store ID, name, and price are required' });
@@ -195,7 +201,8 @@ router.get('/:id', async (req, res) => {
         storeId
       }
     });
-
+    
+    console.log("Product created successfully with image:", imageUrl);
     res.status(201).json(newProduct);
   } catch (error) {
     console.error("❌ Error creating product:", error);

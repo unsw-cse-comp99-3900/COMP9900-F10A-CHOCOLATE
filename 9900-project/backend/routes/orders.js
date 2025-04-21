@@ -285,6 +285,121 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 /**
+ * 🔹 Update order status (PUT /api/orders/:id)
+ * Farmers can update orders for their products
+ * Customers can update their own orders (e.g., cancel)
+ * Admins can update any order
+ */
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    console.log(`🔄 Update request for order ID: ${id}, New status: ${status}`);
+    console.log(`🔑 User ID: ${req.user.id}, Role: ${req.user.role}`);
+    
+    if (!status) {
+      return res.status(400).json({ message: 'Status is required' });
+    }
+    
+    // Validate status value
+    const validStatuses = ['PENDING', 'PREPARED', 'DELIVERED', 'COMPLETED', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        message: 'Invalid status value',
+        validValues: validStatuses
+      });
+    }
+    
+    // Retrieve order details to check permissions
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: {
+                store: {
+                  select: {
+                    ownerId: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    if (!order) {
+      console.log(`❌ Order not found: ${id}`);
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    
+    console.log(`✅ Order found: ${id}, Current status: ${order.status}`);
+    
+    // Check permissions
+    const isCustomer = req.user.id === order.customerId;
+    const isFarmer = req.user.role === 'FARMER' && order.items.some(
+      item => item.product.store.ownerId === req.user.id
+    );
+    const isAdmin = req.user.role === 'ADMIN';
+    
+    console.log(`🔒 Permissions - Customer: ${isCustomer}, Farmer: ${isFarmer}, Admin: ${isAdmin}`);
+    
+    if (!isCustomer && !isFarmer && !isAdmin) {
+      console.log(`❌ Permission denied for user ${req.user.id}`);
+      return res.status(403).json({ message: 'Permission denied to update this order' });
+    }
+    
+    // Additional permission checks based on user role and status transition
+    if (req.user.role === 'CUSTOMER' && status !== 'CANCELLED') {
+      return res.status(403).json({ message: 'Customers can only cancel orders' });
+    }
+    
+    // Update order status
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: { status },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                imageUrl: true,
+                store: {
+                  select: {
+                    id: true,
+                    name: true,
+                    ownerId: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log(`✅ Order updated successfully: ${id}, New status: ${status}`);
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error("❌ Error updating order status:", error);
+    res.status(500).json({ message: 'Failed to update order status' });
+  }
+});
+
+/**
  * 🔹 Get list of order statuses (GET /api/orders/statuses)
  * Public API
  */

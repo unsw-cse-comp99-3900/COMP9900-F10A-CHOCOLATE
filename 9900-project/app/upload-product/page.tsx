@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,6 @@ const formSchema = z.object({
   productDescription: z.string().min(2, "Description must be at least 2 characters").max(2000, "Description must be less than 2000 characters"),
   productPrice: z.string().min(1, "Price is required"),
   productQuantity: z.string().min(1, "Quantity is required"),
-  productImage: z.string().optional(),
   productCategory: z.string().min(2, "Category is required"),
 });
 
@@ -37,6 +36,9 @@ export default function UploadProduct() {
   const [storeId, setStoreId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   // Define form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -46,7 +48,6 @@ export default function UploadProduct() {
         productDescription: "",
         productPrice: "",
         productQuantity: "",
-        productImage: "",
         productCategory: "",
     },
   });
@@ -85,6 +86,74 @@ export default function UploadProduct() {
     fetchStoreData();
   }, [user]);
 
+  // Handle file selection
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedFile(file);
+    
+    if (file) {
+      const fileReader = new FileReader();
+      fileReader.onload = () => {
+        setPreviewUrl(fileReader.result as string);
+      };
+      fileReader.readAsDataURL(file);
+      setUploadStatus(null); // Reset upload status when a new file is selected
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  // Handle file upload
+  const uploadImage = async (): Promise<string | null> => {
+    if (!selectedFile) return null;
+    
+    setUploadStatus("Uploading...");
+    
+    try {
+      // Get token from storage
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+      // Add the token to the form data instead of headers
+      formData.append('token', token);
+      
+      console.log("Starting file upload for:", selectedFile.name);
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/upload`, {
+        method: 'POST',
+        // Don't set Content-Type header for FormData, browser will set it with boundary
+        body: formData,
+      });
+      
+      console.log("Upload response status:", response.status);
+      
+      if (!response.ok) {
+        let errorMessage = 'Failed to upload image';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.error("Could not parse error response:", e);
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json();
+      setUploadStatus("Upload successful!");
+      console.log("File upload response:", data);
+      return data.fileName; // Return the file name saved on the server
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      setUploadStatus("Upload failed. Please try again.");
+      return null;
+    }
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // Check if user is logged in and has a store
     if (!user || user.role !== "FARMER") {
@@ -111,6 +180,27 @@ export default function UploadProduct() {
     setIsSubmitting(true);
 
     try {
+      console.log("Starting product submission with image:", selectedFile ? selectedFile.name : "No file selected");
+      
+      // Upload image first if a file is selected
+      let imageFileName = '/default-product.jpg'; // Default image
+      
+      if (selectedFile) {
+        console.log("Attempting to upload file:", selectedFile.name);
+        const uploadedFileName = await uploadImage();
+        console.log("Upload result:", uploadedFileName);
+        
+        if (uploadedFileName) {
+          imageFileName = uploadedFileName; // Don't add leading slash, it's already in the fileName from server
+          console.log("Image file name set to:", imageFileName);
+        } else {
+          console.warn("File upload failed, using default image");
+        }
+      } else {
+        console.log("No file selected, using default image");
+      }
+
+      console.log("Preparing to create product with image:", imageFileName);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/products`, {
         method: 'POST',
         headers: {
@@ -122,7 +212,7 @@ export default function UploadProduct() {
           description: values.productDescription,
           price: parseFloat(values.productPrice),
           quantity: parseInt(values.productQuantity),
-          imageUrl: values.productImage || '/default-product.jpg', // Default image if none provided
+          imageUrl: '/'+imageFileName, 
           category: values.productCategory,
           storeId: storeId,
         }),
@@ -134,6 +224,7 @@ export default function UploadProduct() {
       }
 
       const data = await response.json();
+      console.log("Product created successfully:", data);
       
       alert("Product created successfully!");
 
@@ -254,25 +345,44 @@ export default function UploadProduct() {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="productImage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Product Image URL</FormLabel>
-                <FormControl>
-                  <Input className="w-full" type="text" placeholder="Enter image URL or upload path" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Enter an image URL or upload path for your product
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
+          <div className="space-y-4">
+            <div>
+              <FormLabel htmlFor="productImage">Product Image</FormLabel>
+              <div className="mt-1 flex items-center">
+                <Input
+                  id="productImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full"
+                />
+              </div>
+              {uploadStatus && (
+                <p className={`text-sm mt-1 ${uploadStatus.includes('failed') ? 'text-red-500' : 'text-green-500'}`}>
+                  {uploadStatus}
+                </p>
+              )}
+              <FormDescription>
+                Select an image file for your product (JPG, PNG, etc.)
+              </FormDescription>
+            </div>
+            
+            {previewUrl && (
+              <div className="mt-4">
+                <p className="text-sm font-medium mb-2">Preview:</p>
+                <div className="relative w-full h-48 border border-gray-200 rounded-md overflow-hidden">
+                  <img
+                    src={previewUrl}
+                    alt="Product preview"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
             )}
-          />
+          </div>
     
           <div className="flex justify-center">
-            <Button type="submit" className="w-1/2" disabled={isSubmitting}>
+            <Button type="submit" className="w-1/2 mb-10" disabled={isSubmitting}>
               {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           </div>

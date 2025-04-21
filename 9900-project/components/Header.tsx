@@ -111,10 +111,7 @@ const Header = () => {
   const toggleCartSlide = () => {
     setCartSlideOpen(!cartSlideOpen);
   };
-
-  if (isLoggedIn && user?.role === "ADMIN") {
-    return null;
-  }
+  if (user?.role === "ADMIN") return null;
 
   return (
     <header className="w-full">
@@ -202,7 +199,7 @@ const Header = () => {
                 onClick={toggleSearchDropdown}
                 className="h-full py-3 px-2 border border-r-0 border-black/30 rounded-l-full bg-white flex items-center justify-between w-full text-left"
               >
-                <span className="truncate text-sm ml-2 font-semibold">{searchType === "product" ? "Products" : "Farmers"}</span>
+                <span className="truncate text-xs ml-2 font-semibold">{searchType === "product" ? "Products" : "Farmers"}</span>
                 <ChevronDown className="h-4 w-4 ml-1 flex-shrink-0" />
               </button>
               
@@ -250,7 +247,7 @@ const Header = () => {
                 onClick={toggleSearchDropdown}
                 className="h-full py-3 px-2 border border-r-0 border-black/30 rounded-l-full bg-white flex items-center justify-between w-full text-left"
               >
-                <span className="truncate text-sm ml-2 font-semibold">{searchType === "product" ? "Products" : "Farmers"}</span>
+                <span className="truncate text-xs ml-2 font-semibold">{searchType === "product" ? "Products" : "Farmers"}</span>
                 <ChevronDown className="h-4 w-4 ml-1 flex-shrink-0" />
               </button>
               
@@ -325,11 +322,11 @@ const Header = () => {
                       My Profile
                     </Link>
                     {user?.role === "FARMER" && (
-                      <Link href="/account/store" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
+                      <Link href="/landing_famer_store" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
                         My Store
                       </Link>
                     )}
-                    <Link href={isLoggedIn && user?.role === "FARMER" ? "/farmer-orders" : "/Cusomer-Order"} className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
+                    <Link href={isLoggedIn && user?.role === "FARMER" ? "/Farmer-Order" : "/Cusomer-Order"} className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
                       My Orders    
                     </Link>
                     <button 
@@ -472,13 +469,13 @@ const Header = () => {
                           </Link>
                           <div className="ml-4 pl-6 border-l border-gray-700 space-y-1 py-1">
                             {category.subcategories.map((subcategory, subIndex) => (
-                              <Link 
+                              <Button 
                                 key={subIndex} 
-                                href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase()}`}
+                                onClick={() => router.push(`/search?q=${subcategory}&type=${'product'}`)}
                                 className="block py-1 px-4 text-gray-400 hover:text-white text-sm"
                               >
                                 {subcategory}
-                              </Link>
+                              </Button>
                             ))}
                           </div>
                         </div>
@@ -500,10 +497,10 @@ const Header = () => {
               </div>
               {mobileAboutOpen && (
                 <div className="bg-gray-800 py-1">
-                  <Link href="/about" className="block py-2 px-8 hover:bg-gray-700">
+                  <Link href="/AboutUs" className="block py-2 px-8 hover:bg-gray-700">
                     About Us
                   </Link>
-                  <Link href="/faq" className="block py-2 px-8 hover:bg-gray-700">
+                  <Link href="/FAQ-page" className="block py-2 px-8 hover:bg-gray-700">
                     FAQs
                   </Link>
                 </div>
@@ -511,7 +508,7 @@ const Header = () => {
             </li>
             
             <li className="py-2 px-4">
-              <Link href="/contact" className="font-semibold hover:text-gray-300 transition-colors block">
+              <Link href="/AboutUs" className="font-semibold hover:text-gray-300 transition-colors block">
                 CONTACT US
               </Link>
             </li>
@@ -555,12 +552,12 @@ const Header = () => {
                         <ul className="space-y-2 mt-3">
                           {category.subcategories.map((subcategory, subIndex) => (
                             <li key={subIndex}>
-                              <Link 
-                                href={`/product-page/${category.name.toLowerCase()}/${subcategory.toLowerCase().replace(/\s+/g, '-')}`}
-                                className="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded"
+                              <Button 
+                                 onClick={() => router.push(`/search?q=${subcategory}&type=${'product'}`)}
+                                className="block px-4 py-2 text-sm bg-white text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded"
                               >
                                 {subcategory}
-                              </Link>
+                              </Button>
                             </li>
                           ))}
                         </ul>
@@ -578,17 +575,17 @@ const Header = () => {
               </button>
               <div className="absolute hidden group-hover:block top-full left-0 bg-white text-black rounded-md shadow-lg w-[200px] z-50">
                 <div className="py-2">
-                  <Link href="/about" className="block px-4 py-2 hover:bg-gray-100">
+                  <Link href="/AboutUs" className="block px-4 py-2 hover:bg-gray-100">
                     About Us
                   </Link>
-                  <Link href="/faq" className="block px-4 py-2 hover:bg-gray-100">
+                  <Link href="/FAQ-page" className="block px-4 py-2 hover:bg-gray-100">
                     FAQs
                   </Link>
                 </div>
               </div>
             </div>
             
-            <Link href="/contact" className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2">
+            <Link href="/AboutUs" className="text-white font-semibold hover:text-gray-300 transition-colors px-4 py-2">
               CONTACT US
             </Link>
           </div>
