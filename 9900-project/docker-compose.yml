@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend       # Path to the folder with your backend Dockerfile
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - '5001:5001'            # Expose backend on localhost:5001
+    environment:
+      DATABASE_URL: "postgresql://postgres:password@db:5432/farmers_marketplace"
+      NODE_ENV: "development"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:13
+    container_name: db
+    ports:
+      - "5432:5432"            # Expose DB port so backend can connect
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: farmers_marketplace
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  studio:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - '5555:5555' 
+    container_name: prisma-studio
+    command: npx prisma studio
+    environment:
+      DATABASE_URL: "postgresql://postgres:password@db:5432/farmers_marketplace"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  pgdata:
