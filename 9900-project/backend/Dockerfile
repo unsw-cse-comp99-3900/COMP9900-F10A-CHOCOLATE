@@ -29,8 +29,9 @@ npx prisma migrate dev --name init
 echo "Deploying Prisma schema..."
 # npx prisma migrate dev
 
-# Optional: Seed the database if needed
-# npx prisma db seed
+# Seed the database
+echo "Seeding the database..."
+npx prisma db seed
 
 # Start the application
 echo "Starting server..."

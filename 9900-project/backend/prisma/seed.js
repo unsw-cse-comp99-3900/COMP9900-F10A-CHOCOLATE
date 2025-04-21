@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> yuchen-branch
 const { PrismaClient, UserRole, OrderStatus, ProductCategory } = require("@prisma/client");
 const prisma = new PrismaClient();
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // instead of 'bcrypt'
 require('dotenv').config();
 
 async function main() {
@@ -14,7 +9,22 @@ async function main() {
   // ✅ Hash the password once for all users
   const hashedPassword = await bcrypt.hash("password123", 10);
 
-  // 1️⃣ 创建 5 个农民 (FARMER)
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  //create admin account
+  const admin = await prisma.user.create({
+    data: {
+      email: "admin@farmersmarket.com",
+      password: adminPassword,
+      name: "Admin",
+      phone: "1390013800",
+      address: "Admin Address",
+      role: UserRole.ADMIN,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
+  // 1️⃣ create 5 farmers
   const farmers = await prisma.$transaction(
     Array.from({ length: 5 }).map((_, i) =>
       prisma.user.create({
@@ -32,7 +42,7 @@ async function main() {
     )
   );
 
-  // 2️⃣ 为每个农民创建一个店铺 (Store)
+  // 2️⃣ create 5 stores for each farmer
   const stores = await prisma.$transaction(
     farmers.map((farmer, i) =>
       prisma.store.create({
@@ -49,7 +59,7 @@ async function main() {
     )
   );
 
-  // 3️⃣ 创建产品 (Product)
+  // 3️⃣ create 5 products for each store
   const products = await prisma.$transaction(
     stores.flatMap((store, i) =>
       Array.from({ length: 5 }).map((_, j) => {
@@ -107,7 +117,7 @@ async function main() {
     )
   );
 
-  // 4️⃣ 创建 5 个顾客 (CUSTOMER)
+  // 4️⃣ create 5 customers
   const customers = await prisma.$transaction(
     Array.from({ length: 5 }).map((_, i) =>
       prisma.user.create({
@@ -125,7 +135,7 @@ async function main() {
     )
   );
 
-  // 5️⃣ 为每个顾客创建一个订单 (Order)
+  // 5️⃣ create 5 orders for each customer
   const orders = await prisma.$transaction(
     customers.map((customer, i) =>
       prisma.order.create({
@@ -140,7 +150,7 @@ async function main() {
     )
   );
 
-  // 6️⃣ 每个订单包含 3 个订单项 (OrderItem)
+  // 6️⃣ each order contains 3 order items
   await prisma.$transaction(
     orders.flatMap((order, i) =>
       Array.from({ length: 3 }).map((_, j) => {
@@ -160,7 +170,7 @@ async function main() {
     )
   );
 
-  // 7️⃣ 创建评价 (Review)
+  // 7️⃣ create reviews
   await prisma.$transaction(
     customers.map((customer, i) =>
       prisma.review.create({
@@ -186,99 +196,4 @@ main()
   })
   .finally(() => {
     prisma.$disconnect();
-<<<<<<< HEAD
-=======
-=======
-=======
-require('dotenv').config({ path: __dirname + '/../.env' }); 
->>>>>>> origin/boxing
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-
-async function main() {
-  // Step 1: Create a FARMER user
-  const farmer = await prisma.user.upsert({
-    where: { email: 'farmer@example.com' },
-    update: {},
-    create: {
-      name: 'Demo Farmer',
-      email: 'farmer@example.com',
-      password: '123456', // If using hashing in production, replace with hashed password
-      role: 'FARMER'
-    }
-  });
-  console.log(`👨‍🌾 Farmer created: ${farmer.name} (${farmer.email})`);
-
-  // Step 2: Create a store for the farmer
-  const store = await prisma.store.upsert({
-    where: {
-      name: "Demo Store" 
-    },
-    update: {},
-    create: {
-      name: "Demo Store",
-      ownerId: farmer.id, 
-    }
-  });
-  console.log(`🏪 Store created: ${store.name}`);
-
-  // Step 3: Define sample products across multiple categories
-  const products = [
-    // WHEAT
-    { name: "Whole Wheat", category: "WHEAT", price: 10.0 },
-    { name: "Wheat Flour", category: "WHEAT", price: 11.0 },
-    { name: "Wheat Bran", category: "WHEAT", price: 9.0 },
-    { name: "Semolina", category: "WHEAT", price: 10.5 },
-    { name: "Wheat Germ", category: "WHEAT", price: 10.2 },
-
-    // SUGAR CANE
-    { name: "Raw Sugar", category: "SUGAR_CANE", price: 8.0 },
-    { name: "Brown Sugar", category: "SUGAR_CANE", price: 8.5 },
-    { name: "Molasses", category: "SUGAR_CANE", price: 7.5 },
-    { name: "Jaggery", category: "SUGAR_CANE", price: 7.0 },
-    { name: "Cane Syrup", category: "SUGAR_CANE", price: 7.2 },
-
-    // LENTILS
-    { name: "Red Lentils", category: "LENTILS", price: 6.0 },
-    { name: "Green Lentils", category: "LENTILS", price: 6.2 },
-    { name: "Yellow Lentils", category: "LENTILS", price: 6.5 },
-    { name: "Black Lentils", category: "LENTILS", price: 6.8 },
-    { name: "Split Peas", category: "LENTILS", price: 5.9 },
-
-    // FRUIT
-    { name: "Apples", category: "FRUIT", price: 4.0 },
-    { name: "Bananas", category: "FRUIT", price: 3.5 },
-    { name: "Oranges", category: "FRUIT", price: 4.2 },
-    { name: "Berries", category: "FRUIT", price: 5.5 },
-    { name: "Grapes", category: "FRUIT", price: 4.8 },
-
-    // VEGGIE
-    { name: "Tomatoes", category: "VEGGIE", price: 2.5 },
-    { name: "Carrots", category: "VEGGIE", price: 2.8 },
-    { name: "Spinach", category: "VEGGIE", price: 3.0 },
-    { name: "Broccoli", category: "VEGGIE", price: 3.2 },
-    { name: "Potatoes", category: "VEGGIE", price: 2.3 },
-  ];
-
-  // Step 4: Create products in the database
-  for (const product of products) {
-    await prisma.product.create({
-      data: {
-        ...product,
-        quantity: 100,
-        storeId: store.id
-      }
-    });
-    console.log(`✅ Product added: ${product.name}`);
-  }
-}
-
-main()
-  .catch((e) => {
-    console.error("❌ Error seeding database:", e);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
->>>>>>> origin/boxing
->>>>>>> yuchen-branch
   });
