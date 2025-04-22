@@ -112,6 +112,11 @@ const Header = () => {
     setCartSlideOpen(!cartSlideOpen);
   };
 
+  const currentUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+  const userType = currentUser ? JSON.parse(currentUser).role : null;
+  const isAdmin = userType === "ADMIN"; 
+
+  if (isAdmin) return null;
 
   return (
     <header className="w-full">
