@@ -7,25 +7,15 @@ import Link from "next/link";
 
 export default function Home() {
   const [farmers, setFarmers] = useState<{ id: string; name: string; image: string; description: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchFarmers() {
       try {
-        setLoading(true);
         const response = await fetch("http://localhost:5001/api/stores");
-        
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-        
         const data = await response.json();
 
         if (!Array.isArray(data)) {
-          console.error("API did not return an array:", data);
-          setFarmers([]);
-          return;
+          throw new Error("API did not return an array");
         }
 
         const formattedFarmers = data.slice(0, 4).map(store => ({
@@ -38,10 +28,6 @@ export default function Home() {
         setFarmers(formattedFarmers);
       } catch (error) {
         console.error("Failed to fetch farmers:", error);
-        setError("Failed to load farmers. Please try again later.");
-        setFarmers([]);
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -169,10 +155,8 @@ export default function Home() {
           </Link>
         </div>
 
-        {loading ? (
+        {farmers.length === 0 ? (
           <p className="text-gray-500">Loading farmers...</p>
-        ) : error ? (
-          <p className="text-red-500">{error}</p>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             {farmers.map((farmer) => (
