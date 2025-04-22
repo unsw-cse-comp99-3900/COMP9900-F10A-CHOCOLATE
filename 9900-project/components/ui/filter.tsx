@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import * as Slider from "@radix-ui/react-slider";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { formatSlugName } from "@/lib/utils";
 
 interface Category {
   name: string;
@@ -18,7 +19,7 @@ interface FilterSidebarProps {
 
 export default function FilterSidebar({ categories, onFilterChange }: FilterSidebarProps) {
   const [priceRange, setPriceRange] = useState([0, 150]); // Default price range
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All Products");
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   // Handle price slider movement
@@ -78,7 +79,7 @@ export default function FilterSidebar({ categories, onFilterChange }: FilterSide
               }`}
               onClick={() => selectCategory(category.name)}
             >
-              <span>{category.name}</span>
+              <span>{formatSlugName(category.name)}</span>
               <div className="flex items-center space-x-2">
                 <span className="px-2 py-1 text-xs font-semibold bg-gray-200 rounded">
                   {category.count}

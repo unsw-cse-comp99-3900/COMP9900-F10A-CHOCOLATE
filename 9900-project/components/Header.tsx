@@ -112,6 +112,8 @@ const Header = () => {
     setCartSlideOpen(!cartSlideOpen);
   };
   if (user?.role === "ADMIN") return null;
+  console.log("👤 当前用户信息：", user);
+
 
   return (
     <header className="w-full">

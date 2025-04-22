@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { formatSlugName } from "@/lib/utils";
 
 export default function Home() {
   const [farmers, setFarmers] = useState<{ id: string; name: string; image: string; description: string }[]>([]);
@@ -105,7 +106,7 @@ export default function Home() {
                     sizes="100vw"
                   />
                   <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
-                    <h3 className="text-5xl font-bold">{category.name}</h3>
+                    <h3 className="text-5xl font-bold">{formatSlugName(category.name)}</h3>
                     <Button className="mt-4 bg-white/70 text-black px-4 py-2 rounded-md shadow-md hover:bg-white/80 transition cursor-pointer">
                       SHOP NOW
                     </Button>
@@ -126,7 +127,7 @@ export default function Home() {
                     sizes="100vw"
                   />
                   <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
-                    <h3 className="text-5xl font-bold">{category.name}</h3>
+                    <h3 className="text-5xl font-bold">{formatSlugName(category.name)}</h3>
                     <Button className="mt-4 bg-white/70 text-black px-4 py-2 rounded-md shadow-md hover:bg-white/80 transition cursor-pointer">
                       SHOP NOW
                     </Button>

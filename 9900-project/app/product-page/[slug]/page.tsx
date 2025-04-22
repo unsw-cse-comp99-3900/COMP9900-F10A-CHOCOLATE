@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Filter from "@/components/ui/filter";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { formatSlugName } from "@/lib/utils";
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const router = useRouter();
@@ -88,7 +89,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     fetchProducts();
   }, [slug]);
 
-  let bannerText = slug === "shop" ? "SHOP" : slug.charAt(0).toUpperCase() + slug.slice(1);
+  let bannerText = slug === "shop" ? "SHOP" : formatSlugName(slug);
 
   // **处理筛选逻辑**
   const handleFilterChange = ({ category, priceRange }: { category: string; priceRange: number[] }) => {
@@ -178,9 +179,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         {/* 产品列表 */}
         <div className="flex-1 bg-white p-6 shadow rounded-lg">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold">
-              {currentCategory === "All Products" ? "All Products" : `Products in ${currentCategory}`}
-            </h2>
+          <h2 className="text-2xl font-semibold">
+            {currentCategory === "All Products"
+              ? "All Products"
+              : `Products in ${formatSlugName(currentCategory)}`}
+          </h2>
             
             {/* Sort dropdown */}
             <div className="flex items-center">
