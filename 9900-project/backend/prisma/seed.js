@@ -9,7 +9,22 @@ async function main() {
   // ✅ Hash the password once for all users
   const hashedPassword = await bcrypt.hash("password123", 10);
 
-  // 1️⃣ 创建 5 个农民 (FARMER)
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  //create admin account
+  const admin = await prisma.user.create({
+    data: {
+      email: "admin@farmersmarket.com",
+      password: adminPassword,
+      name: "Admin",
+      phone: "1390013800",
+      address: "Admin Address",
+      role: UserRole.ADMIN,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
+  // 1️⃣ create 5 farmers
   const farmers = await prisma.$transaction(
     Array.from({ length: 5 }).map((_, i) =>
       prisma.user.create({
@@ -27,7 +42,7 @@ async function main() {
     )
   );
 
-  // 2️⃣ 为每个农民创建一个店铺 (Store)
+  // 2️⃣ create 5 stores for each farmer
   const stores = await prisma.$transaction(
     farmers.map((farmer, i) =>
       prisma.store.create({
@@ -44,7 +59,7 @@ async function main() {
     )
   );
 
-  // 3️⃣ 创建产品 (Product)
+  // 3️⃣ create 5 products for each store
   const products = await prisma.$transaction(
     stores.flatMap((store, i) =>
       Array.from({ length: 5 }).map((_, j) => {
@@ -102,7 +117,7 @@ async function main() {
     )
   );
 
-  // 4️⃣ 创建 5 个顾客 (CUSTOMER)
+  // 4️⃣ create 5 customers
   const customers = await prisma.$transaction(
     Array.from({ length: 5 }).map((_, i) =>
       prisma.user.create({
@@ -120,7 +135,7 @@ async function main() {
     )
   );
 
-  // 5️⃣ 为每个顾客创建一个订单 (Order)
+  // 5️⃣ create 5 orders for each customer
   const orders = await prisma.$transaction(
     customers.map((customer, i) =>
       prisma.order.create({
@@ -135,7 +150,7 @@ async function main() {
     )
   );
 
-  // 6️⃣ 每个订单包含 3 个订单项 (OrderItem)
+  // 6️⃣ each order contains 3 order items
   await prisma.$transaction(
     orders.flatMap((order, i) =>
       Array.from({ length: 3 }).map((_, j) => {
@@ -155,7 +170,7 @@ async function main() {
     )
   );
 
-  // 7️⃣ 创建评价 (Review)
+  // 7️⃣ create reviews
   await prisma.$transaction(
     customers.map((customer, i) =>
       prisma.review.create({
