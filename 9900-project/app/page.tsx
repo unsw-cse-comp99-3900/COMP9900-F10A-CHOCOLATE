@@ -7,15 +7,27 @@ import Link from "next/link";
 
 export default function Home() {
   const [farmers, setFarmers] = useState<{ id: string; name: string; image: string; description: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchFarmers() {
       try {
+        setLoading(true);
         const response = await fetch("http://localhost:5001/api/stores");
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
         const data = await response.json();
 
+        // Handle non-array responses gracefully
         if (!Array.isArray(data)) {
-          throw new Error("API did not return an array");
+          console.error("API did not return an array:", data);
+          setFarmers([]);
+          setError("Could not load farmers. Please check if the backend server is running.");
+          return;
         }
 
         const formattedFarmers = data.slice(0, 4).map(store => ({
@@ -26,8 +38,13 @@ export default function Home() {
         }));
 
         setFarmers(formattedFarmers);
+        setError(null);
       } catch (error) {
         console.error("Failed to fetch farmers:", error);
+        setError("Failed to connect to API server. Please check if the backend is running.");
+        setFarmers([]);
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -155,8 +172,23 @@ export default function Home() {
           </Link>
         </div>
 
-        {farmers.length === 0 ? (
+        {loading ? (
           <p className="text-gray-500">Loading farmers...</p>
+        ) : error ? (
+          <div>
+            <p className="text-red-500">{error}</p>
+            <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Show placeholders instead */}
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="group relative h-80 block overflow-hidden rounded-lg shadow-lg bg-gray-200">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                    <h3 className="text-4xl font-bold">Farmer {i}</h3>
+                    <p className="mt-1 text-sm font-normal">Farmer data unavailable</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             {farmers.map((farmer) => (
