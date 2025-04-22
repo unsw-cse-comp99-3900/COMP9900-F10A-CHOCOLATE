@@ -52,25 +52,31 @@ export default function CustomerProfile() {
     },
   });
 
-  // Load user data when component mounts
   useEffect(() => {
     const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
     if (!storedUser) {
       router.push("/login-page");
       return;
     }
-
-    const userInfo = JSON.parse(storedUser);
-    // Set form default values with user data
-    form.reset({
-      name: userInfo.name || "",
-      email: userInfo.email || "",
-      phone: userInfo.phone || "",
-      address: userInfo.address || "",
-      password:  "",
-      confirmPassword:  "",
-    });
-  }, []);
+  
+    try {
+      const parsed = JSON.parse(storedUser);
+      const userInfo = parsed.user || parsed;
+  
+      form.reset({
+        name: userInfo.name || "",
+        email: userInfo.email || "",
+        phone: userInfo.phone || "",
+        address: userInfo.address || "",
+        password:  "",
+        confirmPassword:  "",
+      });
+    } catch (err) {
+      console.error("Failed to parse stored user", err);
+      router.push("/login-page");
+    }
+  }, [form]);
+  
 
   // Handle form submission
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -112,9 +118,14 @@ export default function CustomerProfile() {
       setSuccess("Profile updated successfully!");
       
       // Refresh the page after a short delay
+      // setTimeout(() => {
+      //   window.location.reload();
+      // }, 1500);
+      setSuccess("Profile updated! Redirecting...");
       setTimeout(() => {
-        window.location.reload();
+        window.location.href = "/";
       }, 1500);
+
     } catch (err) {
       console.error("Error updating profile:", err);
       setError(err instanceof Error ? err.message : "Failed to update profile");

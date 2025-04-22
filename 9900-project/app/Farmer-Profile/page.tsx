@@ -108,43 +108,46 @@ export default function EditProfile() {
 
   // Fetch user and store data
   useEffect(() => {
-    if (!user) {
+    const raw = localStorage.getItem("user") || sessionStorage.getItem("user");
+    let latestUser;
+    try {
+      latestUser = raw ? JSON.parse(raw).user || JSON.parse(raw) : null;
+    } catch (e) {
+      console.error("Failed to parse user:", e);
+      latestUser = null;
+    }
+  
+    if (!latestUser) {
       setError("You must be logged in to edit your profile");
       setIsLoading(false);
       return;
     }
-
-    // Load user data into form
+  
+    // ✅ 使用最新的 localStorage 中的 user 重置表单
     userForm.reset({
-      name: user.name || "",
-      phone: (user as any).phone || "",
-      address: (user as any).address || "",
+      name: latestUser.name || "",
+      phone: latestUser.phone || "",
+      address: latestUser.address || "",
       password: "",
       confirmPassword: "",
     });
-
-    // If user is a farmer, fetch store data
-    if (user.role === "FARMER") {
-      fetchStoreData();
+  
+    // ✅ 如果是 farmer，照常加载店铺
+    if (latestUser.role === "FARMER") {
+      fetchStoreData(latestUser);
     } else {
       setIsLoading(false);
     }
-
-    async function fetchStoreData() {
+  
+    async function fetchStoreData(currentUser: ExtendedUser) {
       try {
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (!token) {
-          throw new Error("Authentication token not found");
-        }
-
-        const response = await fetch("http://localhost:5001/api/stores");
-        if (!response.ok) throw new Error("Failed to fetch stores");
-        
-        const stores = await response.json();
-        if (!user) return; // Safety check if user becomes null
-        
-        const userStore = stores.find((s: any) => s.ownerId === user.id);
-        
+        if (!token) throw new Error("No token found");
+  
+        const res = await fetch("http://localhost:5001/api/stores");
+        const stores = await res.json();
+  
+        const userStore = stores.find((s: any) => s.ownerId === currentUser.id);
         if (userStore) {
           setStore(userStore);
           storeForm.reset({
@@ -161,7 +164,8 @@ export default function EditProfile() {
         setIsLoading(false);
       }
     }
-  }, [user, userForm, storeForm]);
+  }, [userForm, storeForm]);
+  
 
   // Update user profile
   async function onUserSubmit(values: z.infer<typeof userProfileSchema>) {
@@ -244,25 +248,24 @@ export default function EditProfile() {
       setError("You must be logged in as a farmer to update store details");
       return;
     }
-    
+  
     if (!store) {
       setError("You need to create a store first");
       return;
     }
-    
-    // Get token from storage
+  
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    
+  
     if (!token) {
       setError("Authentication token not found. Please log in again.");
       router.push("/login-page");
       return;
     }
-
+  
     setIsSubmitting(true);
     setError(null);
     setSuccess(null);
-
+  
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}/api/stores/${store.id}`, {
         method: 'PUT',
@@ -276,20 +279,22 @@ export default function EditProfile() {
           imageUrl: values.storeImageUrl || '/default-store-bg.jpg',
         }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update store details');
       }
-
+  
       const updatedStore = await response.json();
-      setStore(updatedStore);
+      setStore(updatedStore); // ✅ 立即更新本地 UI 状态
       setSuccess("Store details updated successfully!");
-      
-      // Redirect to the farmer landing page after a short delay instead of reloading
+  
+      // ✅ 等待一下再跳转，同时刷新页面数据
       setTimeout(() => {
+        router.refresh(); // ✅ 强制刷新 landing_famer_store 页面数据
         router.push("/landing_famer_store");
-      }, 1500);
+      }, 1000);
+  
     } catch (error) {
       console.error("Error updating store:", error);
       setError(error instanceof Error ? error.message : "Failed to update store details");
@@ -297,7 +302,7 @@ export default function EditProfile() {
       setIsSubmitting(false);
     }
   }
-
+  
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading your profile information...</div>;
   }

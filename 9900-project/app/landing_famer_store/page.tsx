@@ -18,46 +18,68 @@ export default function FarmerOwnStorePage() {
   const [sortOption, setSortOption] = useState("default");
   const productsPerPage = 9;
 
+  interface StoredUser {
+    id: string;
+    name?: string;
+    email?: string;
+    role?: string;
+    phone?: string;
+    address?: string;
+  }  
+
   useEffect(() => {
-    const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
-    if (!storedUser) {
+    const storedUserRaw = localStorage.getItem("user") || sessionStorage.getItem("user");
+    if (!storedUserRaw) {
       setError("User not found");
+      setLoading(false);
       return;
     }
-
-    const user = JSON.parse(storedUser);
+  
+    let user: StoredUser;
+    try {
+      const parsed = JSON.parse(storedUserRaw);
+      user = parsed.user || parsed; // ✅ 自动适配两种结构
+      if (!user.id) throw new Error("Invalid user object (missing id)");
+    } catch (err) {
+      console.error("❌ Failed to parse user from storage:", err);
+      setError("Failed to load user info. Please login again.");
+      setLoading(false);
+      return;
+    }
+  
     setUserId(user.id);
-  }, []);
-
-  useEffect(() => {
-    if (!userId) return;
-
+  
     async function fetchMyStore() {
       try {
         const response = await fetch("http://localhost:5001/api/stores");
         const stores = await response.json();
-
-        const store = stores.find((s: any) => s.ownerId === userId);
-        // if (!store) throw new Error("You haven't created a store yet.");
+  
+        console.log("🔍 stores from backend:", stores);
+        console.log("🔍 looking for ownerId:", user.id);
+  
+        const store = stores.find((s: any) => s.ownerId === user.id);
+        if (!store) throw new Error("Store not found");
+  
         setStore({
-          id: store.owner.id,
+          id: store.owner?.id || user.id,
           name: store.name,
           image: store.imageUrl,
           description: store.description,
           rating: store.rating,
         });
-
+  
         setProducts(store.products);
         setFilteredProducts(store.products);
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message || "Something went wrong");
       } finally {
         setLoading(false);
       }
     }
-
+  
     fetchMyStore();
-  }, [userId]);
+  }, []);
+  
 
   const handleFilterChange = (filters: { category: string; priceRange: number[] }) => {
     const filtered = products.filter((product) => {
