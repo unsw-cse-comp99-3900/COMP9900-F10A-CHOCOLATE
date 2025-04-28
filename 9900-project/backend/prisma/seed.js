@@ -10,19 +10,25 @@ async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
   const adminPassword = await bcrypt.hash("admin123", 10);
-  //create admin account
-  const admin = await prisma.user.create({
-    data: {
-      email: "admin@farmersmarket.com",
-      password: adminPassword,
-      name: "Admin",
-      phone: "1390013800",
-      address: "Admin Address",
-      role: UserRole.ADMIN,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  });
+
+  const existingAdmin = await prisma.user.findUnique({where: {email:"admin@farmersmarket.com"}});
+
+  if(existingAdmin){
+    //create admin account
+    const admin = await prisma.user.create({
+      data: {
+        email: "admin@farmersmarket.com",
+        password: adminPassword,
+        name: "Admin",
+        phone: "1390013800",
+        address: "Admin Address",
+        role: UserRole.ADMIN,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+  }
+ 
 
   // 1️⃣ create 5 farmers
   const farmers = await prisma.$transaction(
