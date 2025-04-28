@@ -81,8 +81,9 @@ Follow these steps to get the project up and running:
     **Password:**
     ``` bash
     admin123
+    ```
     
-   To view the visualized database (via Prisma Studio), go to: [http://localhost:5555](http://localhost:5555)
+ 5. To view the visualized database (via Prisma Studio), go to: [http://localhost:5555](http://localhost:5555)
 
 ---
 
